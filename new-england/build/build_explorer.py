@@ -144,7 +144,7 @@ TAB_JS = """
     'new-england': ['Rosc &middot; Investor prospects &middot; New England',
       'The 272 people on the New England tab of the master list, placed by town of record across Connecticut, Maine, ' +
       'Massachusetts, New Hampshire, Rhode Island and Vermont. Click a state card, town or circle to drill in, and a name ' +
-      'for the full record. Matches and figures unverified, confirm before outreach.']
+      'for the full record.']
   };
   var ne = null, neStarted = false;
   function startNE() {
