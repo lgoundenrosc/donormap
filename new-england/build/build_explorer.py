@@ -33,10 +33,13 @@ def grab(block_css, name):
     return m.group(1).strip()
 # token values from the NE page's own dark (bare :root) and light blocks
 dark_block = css[css.index(':root {'): css.index('@media (prefers-color-scheme: light)')]
-light_block = css[css.index(':root[data-theme="light"] {'):]
-light_block = light_block[:light_block.index('}')]
+# The pages are navy-only now. A light block, if one comes back, gets its own map tokens.
+light_block = None
+if ':root[data-theme="light"] {' in css:
+    light_block = css[css.index(':root[data-theme="light"] {'):]
+    light_block = light_block[:light_block.index('}')]
 dark_tokens = ' '.join(f'--ne-{t}: {grab(dark_block, t)};' for t in MAP_TOKENS)
-light_tokens = ' '.join(f'--ne-{t}: {grab(light_block, t)};' for t in MAP_TOKENS)
+light_tokens = ' '.join(f'--ne-{t}: {grab(light_block, t)};' for t in MAP_TOKENS) if light_block else None
 
 # shadow CSS: drop the token blocks, page-level rules and masthead, rename map tokens
 css = css[css.index('* { box-sizing: border-box; }'):]
@@ -78,8 +81,8 @@ assert 'document.' not in re.sub(r'document\.createElement(NS)?\(', '', js), [m.
 # 1. map tokens into the three :root blocks
 ex = ex.replace('  --font-body: "Source Serif 4"', '  ' + dark_tokens + '\n  --font-body: "Source Serif 4"', 1)
 n_light = ex.count('  --tip-bg: #182042; --tip-fg: #f5f0e4;\n')
-assert n_light == 2, n_light
-ex = ex.replace('  --tip-bg: #182042; --tip-fg: #f5f0e4;\n', '  --tip-bg: #182042; --tip-fg: #f5f0e4;\n  ' + light_tokens + '\n')
+if light_tokens and n_light:
+  ex = ex.replace('  --tip-bg: #182042; --tip-fg: #f5f0e4;\n', '  --tip-bg: #182042; --tip-fg: #f5f0e4;\n  ' + light_tokens + '\n')
 
 # 2. tab styles
 TAB_CSS = """

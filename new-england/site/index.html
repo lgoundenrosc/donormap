@@ -9,7 +9,7 @@
    beside a drill-down panel (New England > state > town > person), the full table, and the people
    with no town on record. Rosc brand: navy #182042 ground, ivory #F5F0E4 text, gold #D1B385 used
    sparingly (priority A, selection, rules), grey #DFDFDF. Source Serif 4 for reading, Barlow
-   Condensed for labels and figures. Dark-first like the quarterly letter, light variant below. */
+   Condensed for labels and figures. Navy for every viewer, whatever their device theme. */
 :root {
   --navy: #182042; --ivory: #f5f0e4; --grey: #dfdfdf; --gold: #d1b385;
   --paper: #182042; --surface: #1d2447; --field: #12183a; --hover: #252c52;
@@ -27,34 +27,6 @@
   --font-label: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
   --radius: 2px;
   color-scheme: dark;
-}
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
-  --paper: #fbf9f4; --surface: #ffffff; --field: #f5f0e4; --hover: #f6f2e8;
-  --ink: #182042; --ink-2: #333a5c; --ink-3: #5c6380; --line: #c8cad3; --line-2: #e6e4dd;
-  --accent: #8a6a36; --rule: #d1b385; --note-bg: #f5f0e4;
-  --chip-on: #182042; --chip-on-fg: #f5f0e4;
-  --warn: #8a6410; --warn-bg: #f8efd9; --warn-line: #e3c27e;
-  --pA: #8a6a36; --pB: #182042; --pC: #5c6aa3; --pD: #a4a7b5;
-  --onA: #ffffff; --onB: #f5f0e4; --onC: #ffffff; --onD: #182042;
-  --water: #dde2ec; --land: #ffffff; --land-has: #f2e8d5; --land-sel: #e4cfa6; --land-hover: #f8f4ea; --land-off: #f2f2f0;
-  --ctx: #eceae4; --ctx-line: #d6d3ca; --town-line: #dadce3; --state-line: #6b7190; --ref: #7c8096; --st-lbl: #a6aabb;
-  --tag-bg: #eef0f7; --tag-fg: #333a5c;
-  --shadow: 0 1px 2px rgba(24,32,66,.06);
-  color-scheme: light;
-} }
-:root[data-theme="light"] {
-  --paper: #fbf9f4; --surface: #ffffff; --field: #f5f0e4; --hover: #f6f2e8;
-  --ink: #182042; --ink-2: #333a5c; --ink-3: #5c6380; --line: #c8cad3; --line-2: #e6e4dd;
-  --accent: #8a6a36; --rule: #d1b385; --note-bg: #f5f0e4;
-  --chip-on: #182042; --chip-on-fg: #f5f0e4;
-  --warn: #8a6410; --warn-bg: #f8efd9; --warn-line: #e3c27e;
-  --pA: #8a6a36; --pB: #182042; --pC: #5c6aa3; --pD: #a4a7b5;
-  --onA: #ffffff; --onB: #f5f0e4; --onC: #ffffff; --onD: #182042;
-  --water: #dde2ec; --land: #ffffff; --land-has: #f2e8d5; --land-sel: #e4cfa6; --land-hover: #f8f4ea; --land-off: #f2f2f0;
-  --ctx: #eceae4; --ctx-line: #d6d3ca; --town-line: #dadce3; --state-line: #6b7190; --ref: #7c8096; --st-lbl: #a6aabb;
-  --tag-bg: #eef0f7; --tag-fg: #333a5c;
-  --shadow: 0 1px 2px rgba(24,32,66,.06);
-  color-scheme: light;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }

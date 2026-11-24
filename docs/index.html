@@ -12,7 +12,7 @@
 /* Layout: masthead over a gold rule, filter bar, figure row, then paired chart panels and the
    full table. Rosc brand as on the New England Donor Map: navy #182042 ground, ivory #F5F0E4
    text, gold #D1B385 used sparingly (priority A, selection, rules), grey #DFDFDF. Source Serif 4
-   for reading, Barlow Condensed for labels and figures. Dark-first, light variant below. */
+   for reading, Barlow Condensed for labels and figures. Navy for every viewer, whatever their device theme. */
 :root {
   --navy: #182042; --ivory: #f5f0e4; --grey: #dfdfdf; --gold: #d1b385;
   --paper: #182042; --surface: #1d2447; --field: #12183a; --hover: #252c52;
@@ -35,42 +35,6 @@
   --font-label: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
   --radius: 2px;
   color-scheme: dark;
-}
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
-  --paper: #fbf9f4; --surface: #ffffff; --field: #f5f0e4; --hover: #f6f2e8;
-  --ink: #182042; --ink-2: #333a5c; --ink-3: #5c6380; --line: #c8cad3; --line-2: #e6e4dd;
-  --accent: #8a6a36; --rule: #d1b385; --note-bg: #f5f0e4; --sel: #8a6a36;
-  --chip-on: #182042; --chip-on-fg: #f5f0e4;
-  --warn: #8a6410; --warn-bg: #f8efd9; --warn-line: #e3c27e;
-  --pA: #8a6a36; --pB: #182042; --pC: #5c6aa3; --pD: #a4a7b5;
-  --onA: #ffffff; --onB: #f5f0e4; --onC: #ffffff; --onD: #182042;
-  --bar: #182042;
-  --m0: #f2f2f0; --m1: #e3e6f1; --m2: #bcc3df; --m3: #8590c3; --m4: #49548f; --m5: #182042;
-  --lbl-hi: #f5f0e4; --lbl-lo: #182042; --state-edge: #ffffff;
-  --tag-bg: #eef0f7; --tag-fg: #333a5c;
-  --bar-bg: rgba(251, 249, 244, .95); --scrim: rgba(24, 32, 66, .35);
-  --tip-bg: #182042; --tip-fg: #f5f0e4;
-  --ne-water: #dde2ec; --ne-land: #ffffff; --ne-land-has: #f2e8d5; --ne-land-sel: #e4cfa6; --ne-land-hover: #f8f4ea; --ne-land-off: #f2f2f0; --ne-ctx: #eceae4; --ne-ctx-line: #d6d3ca; --ne-town-line: #dadce3; --ne-state-line: #6b7190; --ne-ref: #7c8096; --ne-st-lbl: #a6aabb;
-  --shadow: 0 1px 2px rgba(24, 32, 66, .06); --drawer-shadow: -10px 0 30px rgba(24, 32, 66, .18);
-  color-scheme: light;
-} }
-:root[data-theme="light"] {
-  --paper: #fbf9f4; --surface: #ffffff; --field: #f5f0e4; --hover: #f6f2e8;
-  --ink: #182042; --ink-2: #333a5c; --ink-3: #5c6380; --line: #c8cad3; --line-2: #e6e4dd;
-  --accent: #8a6a36; --rule: #d1b385; --note-bg: #f5f0e4; --sel: #8a6a36;
-  --chip-on: #182042; --chip-on-fg: #f5f0e4;
-  --warn: #8a6410; --warn-bg: #f8efd9; --warn-line: #e3c27e;
-  --pA: #8a6a36; --pB: #182042; --pC: #5c6aa3; --pD: #a4a7b5;
-  --onA: #ffffff; --onB: #f5f0e4; --onC: #ffffff; --onD: #182042;
-  --bar: #182042;
-  --m0: #f2f2f0; --m1: #e3e6f1; --m2: #bcc3df; --m3: #8590c3; --m4: #49548f; --m5: #182042;
-  --lbl-hi: #f5f0e4; --lbl-lo: #182042; --state-edge: #ffffff;
-  --tag-bg: #eef0f7; --tag-fg: #333a5c;
-  --bar-bg: rgba(251, 249, 244, .95); --scrim: rgba(24, 32, 66, .35);
-  --tip-bg: #182042; --tip-fg: #f5f0e4;
-  --ne-water: #dde2ec; --ne-land: #ffffff; --ne-land-has: #f2e8d5; --ne-land-sel: #e4cfa6; --ne-land-hover: #f8f4ea; --ne-land-off: #f2f2f0; --ne-ctx: #eceae4; --ne-ctx-line: #d6d3ca; --ne-town-line: #dadce3; --ne-state-line: #6b7190; --ne-ref: #7c8096; --ne-st-lbl: #a6aabb;
-  --shadow: 0 1px 2px rgba(24, 32, 66, .06); --drawer-shadow: -10px 0 30px rgba(24, 32, 66, .18);
-  color-scheme: light;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
