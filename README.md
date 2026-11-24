@@ -1,4 +1,4 @@
-# Donor prospect explorer
+# Investor prospect explorer
 
 An interactive view of the **Rosc Master Conservative Donor Prospect List**
 (Master tab, 2,828 people, nine source lists). Open `index.html` in a browser.
@@ -33,9 +33,23 @@ Set `ASSETS_DIR` if it lives elsewhere.
 | Path | What it is |
 | --- | --- |
 | `index.html` | The built explorer. This is the deliverable. |
+| `docs/index.html` | The same file, served by GitHub Pages. |
 | `src/template.html` | Page, styles and chart code. Edit this, not `index.html`. |
 | `scripts/prep.py` | Cleans the sheet export into `data/prospects.js`. |
 | `scripts/build.py` | Inlines data and map code into `index.html`. |
 | `data/master.json` | Raw Master tab export, 24 Nov 2026. |
 
 The data is private donor research. Keep this repo private.
+
+## GitHub Pages
+
+`docs/` holds a copy of `index.html` and nothing else, so Pages can serve
+the explorer without publishing the raw export in `data/`. In the repo's
+Settings, open Pages, set the source to "Deploy from a branch", and pick
+this branch with the `/docs` folder.
+
+A Pages site is public to anyone with the URL, even when the repo is
+private, unless the organization is on GitHub Enterprise Cloud and the
+site's visibility is set to private. The page carries a noindex tag, which
+keeps well-behaved search engines out but doesn't stop anyone who has the
+link.

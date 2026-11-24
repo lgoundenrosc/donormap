@@ -3,6 +3,7 @@ code in lgoundenrosc/Assets (maps/us-base-map.html). Run after prep.py:
     python3 scripts/prep.py && python3 scripts/build.py
 Writes two builds:
   index.html          standalone file with the data inlined (open locally)
+  docs/index.html     the same file, for GitHub Pages (serve from /docs)
   dist/page.html      hosted build for the claude.ai artifact, which loads
   dist/prospects.json the data from this file beside it
 Set ASSETS_DIR if the Assets checkout is not at ../Assets."""
@@ -21,6 +22,10 @@ data = open(os.path.join(ROOT, 'data', 'prospects.js')).read()
 html = tpl.replace('/*DATA*/', data.replace('</', '<\\/'))
 open(os.path.join(ROOT, 'index.html'), 'w').write(html)
 print('index.html', len(html) // 1024, 'KB')
+# GitHub Pages serves only docs/, so the raw sheet export in data/ stays unpublished.
+os.makedirs(os.path.join(ROOT, 'docs'), exist_ok=True)
+open(os.path.join(ROOT, 'docs', 'index.html'), 'w').write(html)
+open(os.path.join(ROOT, 'docs', '.nojekyll'), 'w').write('')
 
 # 2. hosted: the host supplies doctype, head and body, and the data is fetched
 head_end = tpl.index('<title>')
