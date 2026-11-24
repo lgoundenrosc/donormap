@@ -247,7 +247,7 @@ a { color: var(--rust-deep); }
       <h2>Where they live</h2>
       <p class="sub">Prospects per state, for the 1,025 records with a US state on file. Click a state to filter.</p>
       <div class="legend"><div class="ramp" id="ramp"></div></div>
-      <div id="map"><svg viewBox="0 0 1000 568" role="img" aria-label="Map of prospects by state"></svg></div>
+      <div id="map"><svg viewBox="0 0 1000 568" role="img" aria-label="Prospects by state"></svg></div>
       <p class="foot" id="mapfoot"></p>
     </section>
 
@@ -291,7 +291,7 @@ a { color: var(--rust-deep); }
     <ul>
       <li><b>Documented political giving</b> is the larger of two figures: the sum of 527 giving 2025-26, 527 giving 2021-24 and state PAC giving, or the New England list's all-years totals. The NE totals already span every year, so adding them on top would double count. Every raw field is in the record panel.</li>
       <li><b>Largest published gift band</b> is the floor of the band an institution publishes (for example "$100,000 and up"). It shows up in records but isn't in the political giving total. One record (a band floor of $2) looks like a data-entry slip.</li>
-      <li>1,792 records carry no state, mostly published donor rolls that list names only. They drop out of the map but stay in every other view.</li>
+      <li>1,792 records carry no state, mostly published donor rolls that list names only. They drop out of the state view but stay in every other view.</li>
       <li>De-duplication across lists matched on name and, where available, state. 36 records carry a "Possible matches to check" note. Those are shown in the record panel and are worth a look before outreach.</li>
       <li>Source: Rosc Master Conservative Donor Prospect List, Master tab (2,828 rows, 29 columns). The New England and On 2+ lists tabs are filtered copies of Master, so both are reachable here through the filters above.</li>
     </ul>
@@ -507,7 +507,7 @@ function renderMap(R) {
     lab += '<text class="lbl" text-anchor="middle" x="' + p[0].toFixed(1) + '" y="' + (p[1] + 4.5).toFixed(1) + '" fill="' + (dark ? '#fff' : 'var(--navy)') + '">' + v + '</text>';
   });
   document.getElementById('mapLabels').innerHTML = lab;
-  document.getElementById('mapfoot').innerHTML = 'Not on the map: <span class="num">' + n(none) + '</span> with no state on file' + (pr ? ', <span class="num">' + pr + '</span> in Puerto Rico' : '') + '.';
+  document.getElementById('mapfoot').innerHTML = 'Not shown: <span class="num">' + n(none) + '</span> with no state on file' + (pr ? ', <span class="num">' + pr + '</span> in Puerto Rico' : '') + '.';
 }
 
 /* ---------- source lists ---------- */
