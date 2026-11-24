@@ -26,8 +26,8 @@ print('index.html', len(html) // 1024, 'KB')
 head_end = tpl.index('<title>')
 page = tpl[head_end:]
 page = page.replace('</head>\n<body>\n', '').replace('</body>\n</html>\n', '').replace('</body>\n</html>', '')
-page = page.replace('<title>Donor Prospect Explorer</title>',
-                    '<title>Donor Prospect Explorer</title>\n<meta name="claude:viewport-fit-sides" content="cover">', 1)
+page = page.replace('<title>Investor Prospect Explorer</title>',
+                    '<title>Investor Prospect Explorer</title>\n<meta name="claude:viewport-fit-sides" content="cover">', 1)
 page = page.replace('<script>\n/*DATA*/\n</script>\n', '')
 os.makedirs(os.path.join(ROOT, 'dist'), exist_ok=True)
 open(os.path.join(ROOT, 'dist', 'page.html'), 'w').write(page)
