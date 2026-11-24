@@ -210,7 +210,7 @@ table.people td.st, table.people td.bs { font-family: var(--font-label); font-si
     <span class="badge">Rosc internal</span>
   </header>
 
-  <div class="note-box" id="lede">Loading the New England list.</div>
+  <div class="note-box" id="lede" hidden></div>
   <div class="states" id="states" role="group" aria-label="Choose a state"></div>
 
   <div class="filters" role="group" aria-label="Filters">
@@ -267,6 +267,7 @@ fetch('data.json').then(function (r) {
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
 }).then(boot).catch(function (e) {
+  document.getElementById('lede').hidden = false;
   document.getElementById('lede').innerHTML = '<b>The donor file did not load.</b> data.json could not be read (' +
     String(e && e.message || e).replace(/[<>&]/g, '') + '). Reload the page to try again.';
   if (window.console) console.error(e);
@@ -330,31 +331,6 @@ function boot(D) {
     return true;
   }
   function filtersOn() { return any(S.pri) || any(S.basis) || any(S.lists) || S.multi || !!S.q; }
-
-  /* ------------------------------------------------------------- lede */
-  (function lede() {
-    var placed = P.filter(function (p) { return p.town; });
-    var n = {};
-    placed.forEach(function (p) { n[p.townName + '|' + p.st] = (n[p.townName + '|' + p.st] || 0) + 1; });
-    var gw = n['Greenwich|CT'] || 0, bos = n['Boston|MA'] || 0;
-    var ctPlaced = placed.filter(function (p) { return p.st === 'CT'; });
-    var ctWest = ctPlaced.filter(function (p) { return /^Western/.test(D.towns[p.town].co); }).length;
-    var bosKey = Object.keys(D.towns).filter(function (k) { return D.towns[k].n === 'Boston' && D.towns[k].st === 'MA'; })[0];
-    var bc = D.towns[bosKey].c, lim = 24 / D.kmPerUnit;
-    var metro = placed.filter(function (p) { var c = D.towns[p.town].c; return p.st === 'MA' && Math.hypot(c[0] - bc[0], c[1] - bc[1]) <= lim; }).length;
-    var north = P.filter(function (p) { return p.st === 'ME' || p.st === 'NH' || p.st === 'VT'; });
-    var northA = north.filter(function (p) { return p.priority === 'A'; }).length;
-    var filing = P.filter(function (p) { return p.basis === 'filing'; });
-    var stale = filing.filter(function (p) { return p.lastFiled && p.lastFiled < 2016; }).length;
-    var others = Object.keys(n).filter(function (k) { return k !== 'Greenwich|CT' && k !== 'Boston|MA'; }).map(function (k) { return n[k]; });
-    var third = Math.max.apply(null, others);
-    $('lede').innerHTML = '<b>Two pockets hold most of the list.</b> ' + esc(
-      'Greenwich, Connecticut has ' + gw + ' names, more than Boston (' + bos + ') and more than ' + ['', 'once', 'twice', 'three times', 'four times', 'five times', 'six times'][Math.min(6, Math.floor(gw / third))] + ' as many as any other town (the next largest has ' + third + '). ' +
-      'The Western Connecticut planning region, which runs from Greenwich to Westport and north to Danbury, holds ' + ctWest + ' of Connecticut’s ' + ctPlaced.length + ' placed names. ' +
-      'Boston and the towns within 15 miles of it hold ' + metro + '. ' +
-      'Maine, New Hampshire and Vermont together have ' + north.length + ' names and ' + northA + ' priority A prospects. ' +
-      'And ' + filing.length + ' people are placed only by the address on an IRS 527 filing, ' + stale + ' of them last filed before 2016, so check those addresses before planning a trip around them.');
-  })();
 
   /* ---------------------------------------------------- state cards */
   function renderStates() {
