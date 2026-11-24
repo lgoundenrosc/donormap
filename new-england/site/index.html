@@ -1,0 +1,828 @@
+<title>New England Donor Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex, nofollow">
+<style>
+/* Layout: navy header, six state cards, filter bar, then a tall map beside a drill-down panel
+   (New England > state > town > person), the full table, and the people with no town on record.
+   Palette and type follow the Massachusetts Donor Map so the two pages read as one series. */
+:root {
+  --navy: #12233f; --navy-2: #1d3556; --rust: #9a4a1e; --cream: #fdf6e8; --pale-blue: #a8c0dc;
+  --ink: #16202f; --ink-2: #3c4a5d; --ink-3: #64748b;
+  --line: #dfe3ea; --line-2: #eceef3; --bg: #f4f5f8; --card: #fff; --hover: #f7f8fa;
+  --heading: #12233f; --cream-line: #eadfc4;
+  --amber: #8a5a08; --amber-bg: #fdf1d8; --amber-line: #e0b463;
+  --pA: #9a4a1e; --pB: #1d3556; --pC: #4f8296; --pD: #a3abb7;
+  --land: #fbfaf6; --land-has: #eae4d6; --land-sel: #f3d9c6; --land-hover: #f1ece0; --land-off: #f1f2f4;
+  --ctx: #e9e7e1; --ctx-line: #d2cfc6; --water: #d6e4f0;
+  --town-line: #d3d8e0; --state-line: #4f6078; --ref: #7b8798; --st-lbl: #8d99aa;
+  --tag-bg: #edf0fb; --tag-fg: #33427e; --chip-on: #12233f; --on-dot: #fff;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --shadow: 0 1px 2px rgba(16,27,48,.05), 0 1px 8px rgba(16,27,48,.04);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --rust: #c9733f; --cream: #261f17; --cream-line: #4a3a28; --ink: #e4e8ee; --ink-2: #c1c9d4; --ink-3: #8f9bab;
+  --line: #2b3647; --line-2: #222c3a; --bg: #0e141d; --card: #161f2b; --hover: #1d2836; --heading: #b9cde6;
+  --amber: #e7bf6e; --amber-bg: #33270f; --amber-line: #6b5420;
+  --pA: #cf7a45; --pB: #6f95d1; --pC: #62a4ba; --pD: #7e8898;
+  --land: #1a2431; --land-has: #3b3427; --land-sel: #5c3b25; --land-hover: #263242; --land-off: #151d28;
+  --ctx: #131a23; --ctx-line: #222c39; --water: #070b11;
+  --town-line: #2a3646; --state-line: #93a4bc; --ref: #6d7c90; --st-lbl: #56657a;
+  --tag-bg: #232f55; --tag-fg: #bcc7f0; --chip-on: #2d4a75; --on-dot: #fff;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --rust: #c9733f; --cream: #261f17; --cream-line: #4a3a28; --ink: #e4e8ee; --ink-2: #c1c9d4; --ink-3: #8f9bab;
+  --line: #2b3647; --line-2: #222c3a; --bg: #0e141d; --card: #161f2b; --hover: #1d2836; --heading: #b9cde6;
+  --amber: #e7bf6e; --amber-bg: #33270f; --amber-line: #6b5420;
+  --pA: #cf7a45; --pB: #6f95d1; --pC: #62a4ba; --pD: #7e8898;
+  --land: #1a2431; --land-has: #3b3427; --land-sel: #5c3b25; --land-hover: #263242; --land-off: #151d28;
+  --ctx: #131a23; --ctx-line: #222c39; --water: #070b11;
+  --town-line: #2a3646; --state-line: #93a4bc; --ref: #6d7c90; --st-lbl: #56657a;
+  --tag-bg: #232f55; --tag-fg: #bcc7f0; --chip-on: #2d4a75; --on-dot: #fff;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-block: 22px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.mono { font-family: var(--mono); }
+button { font: inherit; cursor: pointer; color: inherit; }
+a { color: var(--heading); }
+
+.page-header { position: relative; background: var(--navy); border-radius: 12px; border-left: 10px solid var(--rust); padding: 22px 190px 22px 26px; color: #fff; margin-bottom: 14px; }
+.page-header h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.2; text-wrap: balance; }
+.page-header .sub { margin: 0; color: var(--pale-blue); font-size: 13.5px; max-width: 92ch; }
+.header-badge { position: absolute; top: 22px; right: 22px; background: var(--rust); color: #fff; font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.4px; padding: 6px 11px; border-radius: 6px; }
+
+.note-box { background: var(--cream); border: 1px solid var(--cream-line); border-left: 6px solid var(--rust); border-radius: 6px; padding: 12px 18px; margin-bottom: 14px; font-size: 14px; max-width: 100%; }
+.note-box b { color: var(--rust); }
+
+/* State cards double as the state filter. */
+.states { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.stc { text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.stc:hover { border-color: var(--state-line); }
+.stc[aria-pressed="true"] { border-color: var(--rust); box-shadow: inset 0 0 0 1px var(--rust), var(--shadow); }
+.stc:focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; }
+.stc-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.stc-name { font-size: 13px; font-weight: 600; color: var(--heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stc-ab { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 1px; }
+.stc-n { font-family: var(--mono); font-size: 26px; font-weight: 700; color: var(--heading); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stc-k { font-size: 11.5px; color: var(--ink-3); }
+.bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--line-2); margin: 5px 0 3px; }
+.bar i { display: block; height: 100%; }
+.stc-town { font-family: var(--mono); font-size: 11px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.filters { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; box-shadow: var(--shadow); }
+.fgroup { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.fgroup > .lab { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-3); margin-right: 2px; }
+.chip { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); background: var(--card); color: var(--ink-2); border-radius: 999px; padding: 3px 10px; }
+.chip[aria-pressed="true"] { background: var(--chip-on); border-color: var(--chip-on); color: #fff; }
+.chip:focus-visible, .map-tools button:focus-visible, .search:focus-visible, .rowbtn:focus-visible, .back:focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; }
+.chip .sw { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+.chip .ring { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; border: 1.5px solid currentColor; vertical-align: -1px; }
+.chip .n { opacity: .6; }
+.search { flex: 1 1 220px; min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font: inherit; font-size: 13px; background: var(--card); color: var(--ink); }
+.reset { font-family: var(--mono); font-size: 11px; background: none; border: 0; color: var(--rust); padding: 3px 2px; text-decoration: underline; }
+
+.geo-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 14px; align-items: start; }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); min-width: 0; }
+.map-panel { padding: 10px; position: relative; }
+.map-tools { position: absolute; top: 18px; left: 18px; right: 18px; display: flex; flex-wrap: wrap; gap: 4px; z-index: 2; pointer-events: none; }
+.map-tools button { pointer-events: auto; background: var(--card); border: 1px solid var(--line); border-radius: 6px; font-family: var(--mono); font-size: 11.5px; padding: 4px 9px; color: var(--ink-2); box-shadow: var(--shadow); }
+.map-tools button:hover { border-color: var(--navy-2); }
+.map-tools .sq { width: 28px; padding: 4px 0; text-align: center; }
+svg.ne { width: 100%; height: min(80vh, 860px); min-height: 440px; display: block; background: var(--water); border-radius: 6px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+svg.ne.dragging { cursor: grabbing; }
+.ctx { fill: var(--ctx); stroke: var(--ctx-line); stroke-width: .8; vector-effect: non-scaling-stroke; }
+.town { fill: var(--land); stroke: var(--town-line); stroke-width: .5; vector-effect: non-scaling-stroke; }
+.town.has { fill: var(--land-has); }
+.town.off { fill: var(--land-off); }
+.town.sel { fill: var(--land-sel); }
+.town:hover { fill: var(--land-hover); }
+.st-out { fill: none; stroke: var(--state-line); stroke-width: 1.2; vector-effect: non-scaling-stroke; pointer-events: none; }
+.st-out.focus { stroke: var(--rust); stroke-width: 2; }
+.pt { stroke: var(--land); vector-effect: non-scaling-stroke; cursor: pointer; }
+.pt.ring { fill: var(--card) !important; fill-opacity: 1; }
+.pt:hover, .pt.sel { stroke: var(--ink) !important; }
+.pt-n { font-family: var(--mono); fill: var(--on-dot); font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.pt-n.dark { fill: var(--ink); }
+.lbl { font-family: var(--mono); fill: var(--ink); paint-order: stroke; stroke: var(--land); stroke-linejoin: round; pointer-events: none; }
+.ref { font-family: var(--mono); fill: var(--ref); font-style: italic; paint-order: stroke; stroke: var(--land); stroke-linejoin: round; pointer-events: none; text-anchor: middle; }
+.st-lbl { font-family: var(--sans); fill: var(--st-lbl); font-weight: 700; text-anchor: middle; pointer-events: none; text-transform: uppercase; }
+.ctx-lbl { font-family: var(--sans); fill: var(--ref); font-style: italic; text-anchor: middle; pointer-events: none; }
+.map-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); align-items: center; }
+.map-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.map-legend i.ringk { background: var(--card); border: 2px solid var(--ink-3); }
+.disclaimer { font-size: 11.5px; color: var(--ink-3); margin: 6px 2px 0; max-width: 110ch; }
+
+.side { padding: 14px 16px; max-height: calc(min(80vh, 860px) + 60px); overflow: auto; }
+.side h2 { font-size: 17px; margin: 0 0 2px; color: var(--heading); text-wrap: balance; }
+.side .meta { font-family: var(--mono); font-size: 11px; color: var(--ink-3); margin-bottom: 10px; }
+.crumbs { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-bottom: 8px; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+.back { background: none; border: 0; padding: 0; color: var(--heading); font-family: var(--mono); font-size: 11px; text-decoration: underline; text-underline-offset: 2px; }
+.sec-lab { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-3); margin: 14px 0 4px; }
+.rowlist { list-style: none; margin: 0; padding: 0; }
+.rowlist li { border-top: 1px solid var(--line-2); }
+.rowbtn { display: flex; width: 100%; gap: 8px; align-items: baseline; padding: 6px 4px; background: none; border: 0; text-align: left; font-size: 13.5px; }
+.rowbtn:hover { background: var(--hover); }
+.rowbtn .grow { flex: 1; min-width: 0; }
+.rowbtn .sm { display: block; font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rowbtn .amt { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+.rowbtn .cnt { font-family: var(--mono); font-size: 12px; color: var(--heading); font-weight: 700; min-width: 24px; text-align: right; }
+.empty { font-size: 13px; color: var(--ink-3); margin: 6px 0; }
+.pb { display: inline-block; min-width: 20px; text-align: center; font-family: var(--mono); font-size: 10.5px; font-weight: 700; color: #fff; border-radius: 4px; padding: 1px 5px; }
+.pb.A { background: var(--pA); } .pb.B { background: var(--pB); } .pb.C { background: var(--pC); } .pb.D { background: var(--pD); }
+.mix .pb { margin-left: 3px; }
+.basis { display: inline-block; font-family: var(--mono); font-size: 10px; border: 1px solid var(--line); color: var(--ink-3); border-radius: 4px; padding: 0 5px; margin-left: 4px; vertical-align: 1px; white-space: nowrap; }
+.kv { margin: 6px 0 0; }
+.kv dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-3); margin-top: 11px; }
+.kv dd { margin: 2px 0 0; font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
+.money { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 4px; }
+.money td { padding: 3px 0; border-top: 1px solid var(--line-2); }
+.money td:last-child { font-variant-numeric: tabular-nums; text-align: right; font-family: var(--mono); white-space: nowrap; padding-left: 8px; }
+.tag { display: inline-block; font-family: var(--mono); font-size: 10.5px; background: var(--tag-bg); color: var(--tag-fg); border-radius: 4px; padding: 1px 6px; margin: 2px 4px 0 0; }
+.warn { background: var(--amber-bg); border: 1px solid var(--amber-line); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; color: var(--amber); margin-top: 10px; }
+.place { background: var(--hover); border: 1px solid var(--line-2); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; color: var(--ink-2); margin-top: 8px; }
+
+h3.sec { font-size: 17px; margin: 28px 0 8px; color: var(--heading); }
+.count-note { font-family: var(--mono); font-size: 11px; color: var(--ink-3); margin: 0 0 8px; }
+.tbl-wrap { overflow-x: auto; }
+table.people { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--card); font-variant-numeric: tabular-nums; }
+table.people th { text-align: left; font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--ink-3); padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; cursor: pointer; user-select: none; }
+table.people th[aria-sort="ascending"]::after { content: " \25B2"; }
+table.people th[aria-sort="descending"]::after { content: " \25BC"; }
+table.people td { padding: 8px 10px; border-top: 1px solid var(--line-2); vertical-align: top; }
+table.people tr:hover td { background: var(--hover); cursor: pointer; }
+table.people tr:focus-visible td { background: var(--hover); outline: none; }
+table.people td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+table.people td.t { color: var(--ink-3); font-size: 12px; max-width: 360px; }
+table.people td.st { font-family: var(--mono); font-size: 12px; }
+.unplaced { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.unplaced .panel { padding: 12px 16px; font-size: 13px; }
+.unplaced h4 { margin: 0 0 6px; font-size: 14px; color: var(--heading); }
+.unplaced .rowbtn .sm { white-space: normal; }
+.footer { margin-top: 26px; font-size: 12px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 12px; max-width: 120ch; }
+
+@media (max-width: 1100px) {
+  .states { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .unplaced { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 980px) {
+  .geo-wrap { grid-template-columns: minmax(0, 1fr); }
+  .page-header { padding-right: 26px; }
+  .header-badge { position: static; display: inline-block; margin-top: 10px; }
+  .side { max-height: none; }
+  svg.ne { height: 68vh; min-height: 380px; }
+}
+@media (max-width: 560px) {
+  .states { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .unplaced { grid-template-columns: minmax(0, 1fr); }
+  .page-header h1 { font-size: 23px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="page-header">
+    <h1>New England Donor Map</h1>
+    <p class="sub">Conservative donor prospects with a home or tie in Connecticut, Maine, Massachusetts, New Hampshire,
+      Rhode Island or Vermont, from the New England tab of the Rosc Master Conservative Donor Prospect List. Placed by
+      town of record, not street address. Matches and figures unverified, confirm before outreach.</p>
+    <span class="header-badge">Rosc internal</span>
+  </header>
+
+  <div class="note-box" id="lede">Loading the New England list.</div>
+  <div class="states" id="states" role="group" aria-label="Choose a state"></div>
+
+  <div class="filters" role="group" aria-label="Filters">
+    <div class="fgroup" id="f-pri"><span class="lab">Priority</span></div>
+    <div class="fgroup" id="f-basis"><span class="lab">Placed by</span></div>
+    <div class="fgroup" id="f-list"><span class="lab">Source list</span></div>
+    <div class="fgroup"><button class="chip" id="f-multi" aria-pressed="false" type="button">On 2+ lists only</button></div>
+    <input class="search" id="q" type="search" placeholder="Search name, town, title, notes" aria-label="Search people">
+    <button class="reset" id="reset" type="button" hidden>Clear all</button>
+  </div>
+
+  <div class="geo-wrap">
+    <div class="panel map-panel">
+      <div class="map-tools">
+        <button type="button" class="sq" id="z-in" aria-label="Zoom in">+</button>
+        <button type="button" class="sq" id="z-out" aria-label="Zoom out">&minus;</button>
+        <button type="button" id="z-all">All New England</button>
+        <button type="button" id="z-bos">Greater Boston</button>
+        <button type="button" id="z-ff">Greenwich to Westport</button>
+        <button type="button" id="z-sea">NH Seacoast and Lakes</button>
+      </div>
+      <svg class="ne" id="map" role="img" aria-label="New England towns with donor prospect counts"></svg>
+      <div class="map-legend" id="legend"></div>
+      <p class="disclaimer">Circle area grows with the number of people placed in each town and takes the colour of the
+        highest priority there. A hollow ring means nobody in that town lives or works there on our records (they are
+        placed by an old 527 filing address or another tie). Scroll or pinch to zoom, drag to pan, click a town or circle
+        to list its people. Town boundaries from the US Census Bureau 2023 cartographic boundary files (1:500,000),
+        simplified. New York and Canada from Natural Earth.</p>
+    </div>
+    <aside class="panel side" id="side" aria-live="polite"></aside>
+  </div>
+
+  <h3 class="sec" id="tbl-head">Everyone on the New England list</h3>
+  <p class="count-note" id="tcount"></p>
+  <div class="panel tbl-wrap">
+    <table class="people" id="tbl">
+      <thead><tr>
+        <th data-k="name">Name</th><th data-k="townName">Town</th><th data-k="st">State</th><th data-k="priority">Priority</th>
+        <th data-k="nLists">Lists</th><th data-k="top">Largest figure</th><th data-k="basis">Placed by</th><th data-k="title">Title or organization</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <h3 class="sec">No town on record</h3>
+  <p class="count-note" id="ucount"></p>
+  <div class="unplaced" id="unplaced"></div>
+
+  <div class="footer" id="footer"></div>
+</div>
+
+<script>
+fetch('data.json').then(function (r) {
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}).then(boot).catch(function (e) {
+  document.getElementById('lede').innerHTML = '<b>The donor file did not load.</b> data.json could not be read (' +
+    String(e && e.message || e).replace(/[<>&]/g, '') + '). Reload the page to try again.';
+  if (window.console) console.error(e);
+});
+
+function boot(D) {
+  'use strict';
+  var PRI = ['A', 'B', 'C', 'D'];
+  var PCOL = { A: 'var(--pA)', B: 'var(--pB)', C: 'var(--pC)', D: 'var(--pD)' };
+  var STATES = ['MA', 'CT', 'NH', 'ME', 'RI', 'VT'];
+  var SNAME = { MA: 'Massachusetts', CT: 'Connecticut', NH: 'New Hampshire', ME: 'Maine', RI: 'Rhode Island', VT: 'Vermont' };
+  var BASIS = ['home', 'filing', 'tie'];
+  var BSHORT = { home: 'Lives or based here', filing: '527 filing address only', tie: 'Lives elsewhere' };
+  var BTAG = { home: 'home', filing: '527 filing', tie: 'tie' };
+  var BLONG = {
+    home: 'Home or office in this town, per the master list.',
+    filing: 'Placed by the address on an IRS 527 filing. No current home address on record, so check before relying on it.',
+    tie: 'Lives outside New England, or home state not confirmed. Placed at the New England town of the tie shown below.'
+  };
+  var LIST_ORDER = ['NE campaign ties', 'State PACs', 'Foundation donors', '527s', 'Lawyers', 'BENS', 'Trump officials', 'Ambassadors', 'Trump business'];
+  var NS = 'http://www.w3.org/2000/svg';
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmt$(n) {
+    if (n == null) return '';
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M';
+    if (n >= 1e3) return '$' + Math.round(n / 1e3) + 'K';
+    return '$' + Math.round(n);
+  }
+  function full$(n) { return n == null ? '' : '$' + Math.round(n).toLocaleString('en-US'); }
+  function priRank(p) { var i = PRI.indexOf(p); return i < 0 ? 9 : i; }
+  function cmpDefault(a, b) { return priRank(a.priority) - priRank(b.priority) || (b.top || 0) - (a.top || 0) || a.name.localeCompare(b.name); }
+  function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+  Object.keys(D.towns).forEach(function (k) { D.towns[k].co = D.towns[k].co.replace(/ Connecticut planning region$/, ' CT planning region'); });
+  var P = D.people;
+  var byId = {};
+  P.forEach(function (p) {
+    p.listArr = p.listArr || [];
+    p.nLists = +p.nLists || 0;
+    p.townName = p.town ? D.towns[p.town].n : '';
+    p.hay = [p.name, p.city, p.townName, SNAME[p.st], p.st, p.tie, p.title, p.notes, p.affiliations, p.foundation, p.defense, p.wealth].join(' ').toLowerCase();
+    byId[p.id] = p;
+  });
+
+  /* ------------------------------------------------------------ state */
+  var S = { pri: {}, basis: {}, lists: {}, multi: false, q: '', st: null, town: null, person: null, sortK: 'priority', sortDir: 1 };
+  function any(o) { return Object.keys(o).some(function (k) { return o[k]; }); }
+  function passes(p, ignoreState) {
+    if (!ignoreState && S.st && p.st !== S.st) return false;
+    if (any(S.pri) && !S.pri[p.priority]) return false;
+    if (any(S.basis) && !S.basis[p.basis]) return false;
+    if (any(S.lists) && !p.listArr.some(function (l) { return S.lists[l]; })) return false;
+    if (S.multi && p.nLists < 2) return false;
+    if (S.q && p.hay.indexOf(S.q) < 0) return false;
+    return true;
+  }
+  function filtersOn() { return any(S.pri) || any(S.basis) || any(S.lists) || S.multi || !!S.q; }
+
+  /* ------------------------------------------------------------- lede */
+  (function lede() {
+    var placed = P.filter(function (p) { return p.town; });
+    var n = {};
+    placed.forEach(function (p) { n[p.townName + '|' + p.st] = (n[p.townName + '|' + p.st] || 0) + 1; });
+    var gw = n['Greenwich|CT'] || 0, bos = n['Boston|MA'] || 0;
+    var ctPlaced = placed.filter(function (p) { return p.st === 'CT'; });
+    var ctWest = ctPlaced.filter(function (p) { return /^Western/.test(D.towns[p.town].co); }).length;
+    var bosKey = Object.keys(D.towns).filter(function (k) { return D.towns[k].n === 'Boston' && D.towns[k].st === 'MA'; })[0];
+    var bc = D.towns[bosKey].c, lim = 24 / D.kmPerUnit;
+    var metro = placed.filter(function (p) { var c = D.towns[p.town].c; return p.st === 'MA' && Math.hypot(c[0] - bc[0], c[1] - bc[1]) <= lim; }).length;
+    var north = P.filter(function (p) { return p.st === 'ME' || p.st === 'NH' || p.st === 'VT'; });
+    var northA = north.filter(function (p) { return p.priority === 'A'; }).length;
+    var filing = P.filter(function (p) { return p.basis === 'filing'; });
+    var stale = filing.filter(function (p) { return p.lastFiled && p.lastFiled < 2016; }).length;
+    var others = Object.keys(n).filter(function (k) { return k !== 'Greenwich|CT' && k !== 'Boston|MA'; }).map(function (k) { return n[k]; });
+    var third = Math.max.apply(null, others);
+    $('lede').innerHTML = '<b>Two pockets hold most of the list.</b> ' + esc(
+      'Greenwich, Connecticut has ' + gw + ' names, more than Boston (' + bos + ') and more than ' + ['', 'once', 'twice', 'three times', 'four times', 'five times', 'six times'][Math.min(6, Math.floor(gw / third))] + ' as many as any other town (the next largest has ' + third + '). ' +
+      'The Western Connecticut planning region, which runs from Greenwich to Westport and north to Danbury, holds ' + ctWest + ' of Connecticut’s ' + ctPlaced.length + ' placed names. ' +
+      'Boston and the towns within 15 miles of it hold ' + metro + '. ' +
+      'Maine, New Hampshire and Vermont together have ' + north.length + ' names and ' + northA + ' priority A prospects. ' +
+      'And ' + filing.length + ' people are placed only by the address on an IRS 527 filing, ' + stale + ' of them last filed before 2016, so check those addresses before planning a trip around them.');
+  })();
+
+  /* ---------------------------------------------------- state cards */
+  function renderStates() {
+    var list = P.filter(function (p) { return passes(p, true); });
+    var html = STATES.map(function (st) {
+      var ps = list.filter(function (p) { return p.st === st; });
+      var towns = {};
+      ps.forEach(function (p) { if (p.town) towns[p.town] = (towns[p.town] || 0) + 1; });
+      var tk = Object.keys(towns).sort(function (a, b) { return towns[b] - towns[a] || D.towns[a].n.localeCompare(D.towns[b].n); });
+      var mix = PRI.map(function (pr) { return ps.filter(function (p) { return p.priority === pr; }).length; });
+      var bar = ps.length ? mix.map(function (m, i) { return m ? '<i style="width:' + (100 * m / ps.length).toFixed(2) + '%;background:' + PCOL[PRI[i]] + '"></i>' : ''; }).join('') : '';
+      var top = tk.length ? D.towns[tk[0]].n + ' ' + towns[tk[0]] + (tk[1] ? ', ' + D.towns[tk[1]].n + ' ' + towns[tk[1]] : '') : 'No town placed';
+      return '<button type="button" class="stc" data-st="' + st + '" aria-pressed="' + (S.st === st) + '" title="Priority A ' + mix[0] + ', B ' + mix[1] + ', C ' + mix[2] + ', D ' + mix[3] + '">' +
+        '<span class="stc-top"><span class="stc-name">' + SNAME[st] + '</span><span class="stc-ab">' + st + '</span></span>' +
+        '<span class="stc-n">' + ps.length + '</span>' +
+        '<span class="stc-k">' + (ps.length === 1 ? 'person' : 'people') + ', ' + plural(tk.length, 'town') + ', ' + mix[0] + ' priority A</span>' +
+        '<span class="bar" aria-hidden="true">' + bar + '</span>' +
+        '<span class="stc-town">' + esc(top) + '</span></button>';
+    }).join('');
+    $('states').innerHTML = html;
+  }
+  $('states').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-st]');
+    if (!b) return;
+    var st = b.getAttribute('data-st');
+    if (S.st === st) clearState(); else selectState(st);
+  });
+
+  /* ---------------------------------------------------------- filters */
+  (function filters() {
+    var fp = $('f-pri');
+    PRI.forEach(function (p) {
+      var n = P.filter(function (d) { return d.priority === p; }).length;
+      fp.appendChild(chip('<span class="sw" style="background:' + PCOL[p] + '"></span>' + p + ' <span class="n">' + n + '</span>', function (on) { S.pri[p] = on; }));
+    });
+    var fb = $('f-basis');
+    BASIS.forEach(function (b) {
+      var n = P.filter(function (d) { return d.basis === b; }).length;
+      var c = chip(esc(BSHORT[b]) + ' <span class="n">' + n + '</span>', function (on) { S.basis[b] = on; });
+      c.title = BLONG[b];
+      fb.appendChild(c);
+    });
+    var counts = {};
+    P.forEach(function (d) { d.listArr.forEach(function (l) { counts[l] = (counts[l] || 0) + 1; }); });
+    var fl = $('f-list');
+    LIST_ORDER.concat(Object.keys(counts).filter(function (k) { return LIST_ORDER.indexOf(k) < 0; }))
+      .filter(function (k) { return counts[k]; })
+      .forEach(function (l) {
+        fl.appendChild(chip(esc(l) + ' <span class="n">' + counts[l] + '</span>', function (on) { S.lists[l] = on; }));
+      });
+    $('f-multi').onclick = function () { S.multi = !S.multi; this.setAttribute('aria-pressed', S.multi ? 'true' : 'false'); render(); };
+    $('q').addEventListener('input', function () { S.q = this.value.trim().toLowerCase(); render(); });
+    $('reset').onclick = function () {
+      S.pri = {}; S.basis = {}; S.lists = {}; S.multi = false; S.q = ''; $('q').value = '';
+      document.querySelectorAll('.filters .chip').forEach(function (c) { c.setAttribute('aria-pressed', 'false'); });
+      render();
+    };
+  })();
+  function chip(html, set) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.setAttribute('aria-pressed', 'false'); b.innerHTML = html;
+    b.onclick = function () { var on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); set(on); render(); };
+    return b;
+  }
+
+  /* -------------------------------------------------------------- map */
+  var svg = $('map');
+  var VBW = D.vb[0], VBH = D.vb[1];
+  function el(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  var gCtx = el('g', { transform: 'scale(0.1)' }), gLand = el('g', { transform: 'scale(0.1)' }), gOut = el('g', { transform: 'scale(0.1)' });
+  var gStLbl = el('g', {}), gRef = el('g', {}), gPts = el('g', {}), gLbl = el('g', {});
+  D.context.forEach(function (d) { gCtx.appendChild(el('path', { d: d, 'class': 'ctx' })); });
+  var townEls = {};
+  Object.keys(D.towns).forEach(function (k) {
+    var t = D.towns[k];
+    var p = el('path', { d: t.d, 'class': 'town', 'data-k': k });
+    var ti = document.createElementNS(NS, 'title'); ti.textContent = t.n + ', ' + t.st + ' (' + t.co + ')'; p.appendChild(ti);
+    gLand.appendChild(p); townEls[k] = p;
+  });
+  var outEls = {};
+  STATES.forEach(function (st) { var o = el('path', { d: D.states[st].d, 'class': 'st-out' }); gOut.appendChild(o); outEls[st] = o; });
+  [gCtx, gLand, gOut, gStLbl, gRef, gPts, gLbl].forEach(function (g) { svg.appendChild(g); });
+
+  $('legend').innerHTML = PRI.map(function (p) { return '<span><i style="background:' + PCOL[p] + '"></i>Priority ' + p + '</span>'; }).join('') +
+    '<span><i class="ringk"></i>Placed by filing or tie only</span>' +
+    '<span><i style="background:var(--land-has);border-radius:2px"></i>Town with someone listed</span>';
+
+  var vb = [0, 0, VBW, VBH], homeW = VBW;
+  function aspect() { var r = svg.getBoundingClientRect(); return r.width > 0 && r.height > 0 ? r.width / r.height : 0.8; }
+  function fit(bb, pad) {
+    var a = aspect(), x = bb[0], y = bb[1], w = bb[2], h = bb[3], p = pad == null ? 0.06 : pad;
+    x -= w * p; y -= h * p; w *= 1 + 2 * p; h *= 1 + 2 * p;
+    if (w / h < a) { var nw = h * a; x -= (nw - w) / 2; w = nw; } else { var nh = w / a; y -= (nh - h) / 2; h = nh; }
+    return [x, y, w, h];
+  }
+  function home() { return fit(D.region, 0.03); }
+  function clampVB(n) {
+    var a = aspect();
+    var w = Math.max(D.region[2] / 45, Math.min(homeW * 1.15, VBW, VBH * a, n[2]));
+    var h = w / a;
+    var cx = n[0] + n[2] / 2, cy = n[1] + n[3] / 2;
+    var x = cx - w / 2, y = cy - h / 2;
+    x = w >= VBW ? (VBW - w) / 2 : Math.max(0, Math.min(VBW - w, x));
+    y = h >= VBH ? (VBH - h) / 2 : Math.max(0, Math.min(VBH - h, y));
+    return [x, y, w, h];
+  }
+  function setVB(n) {
+    vb = clampVB(n);
+    svg.setAttribute('viewBox', vb.map(function (v) { return v.toFixed(2); }).join(' '));
+    drawMarks();
+  }
+  function zoomK() { return homeW / vb[2]; }
+  function ppu() { var r = svg.getBoundingClientRect(); return (r.width || 600) / vb[2]; }
+
+  var byTown = {};
+  function paintTowns() {
+    Object.keys(townEls).forEach(function (k) {
+      var t = D.towns[k];
+      var c = 'town' + (S.st && t.st !== S.st ? ' off' : '') + (byTown[k] ? ' has' : '') + (S.town === k ? ' sel' : '');
+      if (townEls[k].getAttribute('class') !== c) townEls[k].setAttribute('class', c);
+    });
+    STATES.forEach(function (st) { outEls[st].setAttribute('class', 'st-out' + (S.st === st ? ' focus' : '')); });
+  }
+  function radiusPx(n, k) { return (3 + 2.3 * Math.sqrt(n)) * Math.min(1.7, Math.max(1, Math.pow(k, 0.28))); }
+
+  function drawMarks() {
+    var k = zoomK(), u = 1 / ppu();
+    var towns = Object.keys(byTown).sort(function (a, b) { return byTown[b].length - byTown[a].length; });
+    var html = '', lbl = '', ref = '', st = '';
+    // Draw small circles last so they stay clickable on top of big ones.
+    towns.slice().reverse().forEach(function (t) {
+      var ds = byTown[t], c = D.towns[t].c;
+      var best = ds.map(function (d) { return d.priority; }).sort(function (a, b) { return priRank(a) - priRank(b); })[0];
+      var ringOnly = !ds.some(function (d) { return d.basis === 'home'; });
+      var rp = radiusPx(ds.length, k), r = rp * u;
+      var col = PCOL[best] || 'var(--ink-3)';
+      html += '<circle class="pt' + (ringOnly ? ' ring' : '') + (S.town === t ? ' sel' : '') + '" data-t="' + t + '" cx="' + c[0] + '" cy="' + c[1] + '" r="' + r.toFixed(3) +
+        '" style="fill:' + col + ';stroke:' + (ringOnly ? col : 'var(--land)') + ';stroke-width:' + (ringOnly ? 2.2 : 1.3) + 'px;fill-opacity:.93">' +
+        '<title>' + esc(D.towns[t].n + ', ' + D.towns[t].st + ': ' + plural(ds.length, 'person').replace('persons', 'people')) + '</title></circle>';
+      if (ds.length > 1 && rp >= 7.5) {
+        html += '<text class="pt-n' + (ringOnly ? ' dark' : '') + '" x="' + c[0] + '" y="' + c[1] + '" font-size="' + (Math.min(12, 7 + Math.sqrt(ds.length) * 0.8) * u).toFixed(3) + '">' + ds.length + '</text>';
+      }
+    });
+    // Town labels: only the biggest at regional zoom, every town once zoomed in.
+    var minN = k < 1.6 ? 6 : k < 3 ? 3 : k < 6 ? 2 : 1;
+    var placedL = [];
+    var circ = towns.map(function (t) { return { t: t, c: D.towns[t].c, r: radiusPx(byTown[t].length, k) * u }; });
+    function hitsCircle(x, y0, w, h, own) {
+      return circ.some(function (o) {
+        if (o.t === own) return false;
+        var nx = Math.max(x, Math.min(o.c[0], x + w)), ny = Math.max(y0, Math.min(o.c[1], y0 + h));
+        return Math.hypot(nx - o.c[0], ny - o.c[1]) < o.r;
+      });
+    }
+    towns.forEach(function (t) {
+      if (byTown[t].length < minN) return;
+      var c = D.towns[t].c, r = radiusPx(byTown[t].length, k) * u;
+      var fs = 11 * u, y = c[1] + fs * 0.35, w = D.towns[t].n.length * fs * 0.62;
+      var tries = [[c[0] + r + 2.5 * u, y], [c[0] - r - 2.5 * u - w, y], [c[0] - w / 2, c[1] - r - 3 * u], [c[0] - w / 2, c[1] + r + fs]];
+      for (var i = 0; i < tries.length; i++) {
+        var x = tries[i][0]; y = tries[i][1];
+        var clash = placedL.some(function (p) { return x < p.x + p.w && x + w > p.x && Math.abs(y - p.y) < fs * 1.1; }) ||
+          hitsCircle(x, y - fs * 0.8, w, fs, t);
+        if (clash) continue;
+        placedL.push({ x: x, y: y, w: w });
+        lbl += '<text class="lbl" x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" font-size="' + fs.toFixed(3) + '" stroke-width="' + (3 * u).toFixed(3) + '">' + esc(D.towns[t].n) + '</text>';
+        return;
+      }
+    });
+    if (k >= 1.8) {
+      D.ref.forEach(function (t) {
+        if (byTown[t] || (S.st && D.towns[t].st !== S.st)) return;
+        var c = D.towns[t].c, fs = 10 * u;
+        ref += '<text class="ref" x="' + c[0] + '" y="' + (c[1] + fs * 0.35).toFixed(2) + '" font-size="' + fs.toFixed(3) + '" stroke-width="' + (3 * u).toFixed(3) + '">' + esc(D.towns[t].n) + '</text>';
+      });
+    }
+    if (k < 2.4) {
+      STATES.forEach(function (s) {
+        var c = D.stateLabels[s], fs = (s === 'RI' || s === 'CT' ? 10 : 12) * u;
+        st += '<text class="st-lbl" x="' + c[0] + '" y="' + c[1] + '" font-size="' + fs.toFixed(3) + '" letter-spacing="' + (2 * u).toFixed(3) + '">' + SNAME[s] + '</text>';
+      });
+      D.contextLabels.forEach(function (cl) {
+        st += '<text class="ctx-lbl" x="' + cl[1][0] + '" y="' + cl[1][1] + '" font-size="' + (11 * u).toFixed(3) + '">' + esc(cl[0]) + '</text>';
+      });
+    }
+    gPts.innerHTML = html; gLbl.innerHTML = lbl; gRef.innerHTML = ref; gStLbl.innerHTML = st;
+  }
+
+  /* pointer handling: pan, pinch, wheel, click */
+  function toSvg(e) {
+    var r = svg.getBoundingClientRect();
+    return [vb[0] + (e.clientX - r.left) / r.width * vb[2], vb[1] + (e.clientY - r.top) / r.height * vb[3]];
+  }
+  function zoomAt(f, px, py) {
+    var w = vb[2] / f, h = vb[3] / f;
+    setVB([px - (px - vb[0]) / f, py - (py - vb[1]) / f, w, h]);
+  }
+  svg.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    var p = toSvg(e);
+    zoomAt(e.deltaY < 0 ? 1.25 : 0.8, p[0], p[1]);
+  }, { passive: false });
+  var drag = null, moved = false, pointers = {};
+  svg.addEventListener('pointerdown', function (e) {
+    pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+    moved = false;
+    drag = { x: e.clientX, y: e.clientY, vb: vb.slice() };
+  });
+  svg.addEventListener('pointermove', function (e) {
+    if (!drag || !pointers[e.pointerId]) return;
+    var ids = Object.keys(pointers);
+    if (ids.length === 2) {
+      var oid = ids[0] == e.pointerId ? ids[1] : ids[0];
+      var other = pointers[oid], prev = pointers[e.pointerId];
+      var d0 = Math.hypot(prev.x - other.x, prev.y - other.y), d1 = Math.hypot(e.clientX - other.x, e.clientY - other.y);
+      pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+      if (d0 > 0) { var m = toSvg({ clientX: (e.clientX + other.x) / 2, clientY: (e.clientY + other.y) / 2 }); zoomAt(d1 / d0, m[0], m[1]); }
+      moved = true; drag = { x: e.clientX, y: e.clientY, vb: vb.slice() };
+      return;
+    }
+    if (!moved && Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 5) {
+      moved = true; svg.classList.add('dragging');
+      try { svg.setPointerCapture(e.pointerId); } catch (err) { /* capture is optional */ }
+    }
+    if (moved) {
+      var r = svg.getBoundingClientRect();
+      var dx = (e.clientX - drag.x) / r.width * drag.vb[2], dy = (e.clientY - drag.y) / r.height * drag.vb[3];
+      setVB([drag.vb[0] - dx, drag.vb[1] - dy, drag.vb[2], drag.vb[3]]);
+    }
+  });
+  function endPtr(e) {
+    delete pointers[e.pointerId];
+    if (!Object.keys(pointers).length) { drag = null; svg.classList.remove('dragging'); setTimeout(function () { moved = false; }, 0); }
+  }
+  svg.addEventListener('pointerup', endPtr);
+  svg.addEventListener('pointercancel', endPtr);
+  svg.addEventListener('click', function (e) {
+    if (moved) return;
+    var t = e.target.getAttribute && (e.target.getAttribute('data-t') || e.target.getAttribute('data-k'));
+    if (t && D.towns[t]) selectTown(t, false);
+  });
+  $('z-in').onclick = function () { zoomAt(1.5, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2); };
+  $('z-out').onclick = function () { zoomAt(1 / 1.5, vb[0] + vb[2] / 2, vb[1] + vb[3] / 2); };
+  $('z-all').onclick = function () { clearState(); };
+  $('z-bos').onclick = function () { setVB(fit(D.boxes.boston, 0)); };
+  $('z-ff').onclick = function () { setVB(fit(D.boxes.fairfield, 0)); };
+  $('z-sea').onclick = function () { setVB(fit(D.boxes.seacoast, 0)); };
+  var lastW = 0;
+  window.addEventListener('resize', function () {
+    var r = svg.getBoundingClientRect();
+    if (!r.width || Math.abs(r.width - lastW) < 2) return;
+    lastW = r.width;
+    homeW = home()[2];
+    setVB([vb[0], vb[1], vb[2], vb[3]]);
+  });
+
+  /* ------------------------------------------------------- side panel */
+  function mixBadges(ds) {
+    return '<span class="mix">' + PRI.map(function (p) { var n = ds.filter(function (d) { return d.priority === p; }).length; return n ? '<span class="pb ' + p + '">' + n + p + '</span>' : ''; }).join('') + '</span>';
+  }
+  function personLi(d, showPlace) {
+    var sub = showPlace ? (d.townName ? d.townName + ', ' + d.st : SNAME[d.st] + ', no town') + (d.title ? ' · ' + d.title.split(' | ')[0] : '') : (d.title || '').split(' | ')[0];
+    return '<li><button type="button" class="rowbtn" data-id="' + esc(d.id) + '"><span class="pb ' + esc(d.priority) + '">' + esc(d.priority) + '</span>' +
+      '<span class="grow">' + esc(d.name) + (d.basis !== 'home' ? '<span class="basis">' + BTAG[d.basis] + '</span>' : '') + '<span class="sm">' + esc(sub) + '</span></span>' +
+      '<span class="amt">' + fmt$(d.top) + '</span></button></li>';
+  }
+  function townLi(t, ds, showSt) {
+    return '<li><button type="button" class="rowbtn" data-town="' + t + '"><span class="cnt">' + ds.length + '</span><span class="grow">' + esc(D.towns[t].n) +
+      (showSt ? ', ' + D.towns[t].st : '') + '<span class="sm">' + esc(D.towns[t].co) + '</span></span>' + mixBadges(ds) + '</button></li>';
+  }
+  function crumbs() {
+    var parts = [];
+    if (S.st || S.town || S.person) parts.push('<button type="button" class="back" data-go="ne">New England</button>');
+    var st = S.st || (S.town && D.towns[S.town].st) || (S.person && byId[S.person].st);
+    if (st && (S.town || S.person)) parts.push('<button type="button" class="back" data-go="st" data-st="' + st + '">' + SNAME[st] + '</button>');
+    if (S.person && S.town) parts.push('<button type="button" class="back" data-go="town">' + esc(D.towns[S.town].n) + '</button>');
+    return parts.length ? '<div class="crumbs">' + parts.join('<span aria-hidden="true">&rsaquo;</span>') + '</div>' : '';
+  }
+  function sortedTowns() {
+    return Object.keys(byTown).sort(function (a, b) { return byTown[b].length - byTown[a].length || D.towns[a].n.localeCompare(D.towns[b].n); });
+  }
+  function sideOverview(list) {
+    var towns = sortedTowns();
+    var top = list.slice().sort(cmpDefault).slice(0, 12);
+    return '<h2>New England</h2><div class="meta">' + plural(list.length, 'person').replace('persons', 'people') + ' in ' + plural(towns.length, 'town') + (filtersOn() ? ', filters on' : '') + '</div>' +
+      '<div class="sec-lab">Towns with the most names</div>' +
+      (towns.length ? '<ul class="rowlist">' + towns.slice(0, 15).map(function (t) { return townLi(t, byTown[t], true); }).join('') + '</ul>' : '<p class="empty">No towns match the current filters.</p>') +
+      '<div class="sec-lab">Top of the list (priority, then largest figure)</div>' +
+      (top.length ? '<ul class="rowlist">' + top.map(function (d) { return personLi(d, true); }).join('') + '</ul>' : '<p class="empty">Nobody matches the current filters.</p>');
+  }
+  function sideState(st, list) {
+    var towns = sortedTowns();
+    var un = list.filter(function (d) { return !d.town; }).sort(cmpDefault);
+    var all = P.filter(function (d) { return d.st === st; }).length;
+    return crumbs() + '<h2>' + SNAME[st] + '</h2><div class="meta">' + list.length + (list.length !== all ? ' of ' + all : '') + ' ' + (all === 1 ? 'person' : 'people') + ' in ' + plural(towns.length, 'town') + (filtersOn() ? ', filters on' : '') + '</div>' +
+      '<div class="sec-lab">Towns</div>' +
+      (towns.length ? '<ul class="rowlist">' + towns.map(function (t) { return townLi(t, byTown[t], false); }).join('') + '</ul>' : '<p class="empty">No towns match the current filters.</p>') +
+      (un.length ? '<div class="sec-lab">No town on record (' + un.length + ')</div><ul class="rowlist">' + un.map(function (d) { return personLi(d, false); }).join('') + '</ul>' : '');
+  }
+  function sideTown(t) {
+    var ds = (byTown[t] || []).slice().sort(cmpDefault);
+    var all = P.filter(function (d) { return d.town === t; }).length;
+    var T = D.towns[t];
+    return crumbs() + '<h2>' + esc(T.n) + ', ' + T.st + '</h2><div class="meta">' + esc(T.co) + ' · ' + ds.length +
+      (ds.length !== all ? ' of ' + all : '') + ' ' + (all === 1 ? 'person' : 'people') + (ds.length !== all ? ' (filters on)' : '') + '</div>' +
+      (ds.length ? '<ul class="rowlist">' + ds.map(function (d) { return personLi(d, false); }).join('') + '</ul>'
+        : '<p class="empty">' + (all ? 'Nobody in this town matches the current filters.' : 'Nobody on the list is placed in this town.') + '</p>');
+  }
+  function kv(label, val) { return val ? '<dt>' + esc(label) + '</dt><dd>' + val + '</dd>' : ''; }
+  function txt(s) { return s && s !== '-' ? esc(s).replace(/ \| /g, '<br>') : ''; }
+  function linkify(s) {
+    if (!s || s === '-') return '';
+    return esc(s).split(' | ').map(function (part) {
+      return part.replace(/https?:\/\/[^\s<]+/g, function (u) {
+        var label = u.replace(/^https?:\/\/(www\.)?/, '').replace(/&amp;/g, '&');
+        if (label.length > 48) label = label.slice(0, 46) + '…';
+        return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + esc(label) + '</a>';
+      });
+    }).join('<br>');
+  }
+  function sidePerson(d) {
+    var rows = [
+      ['527 giving 2025-26', d.g527_2526], ['527 giving 2021-24', d.g527_2124], ['State PAC giving', d.statePac],
+      ['IRS 527 total, all years (NE list)', d.irs527Total], ['Known political money, all sources (NE list)', d.knownMoney],
+      ['Largest published gift band, floor', d.giftBandFloor]
+    ].filter(function (r) { return r[1] != null; });
+    var where = d.town ? D.towns[d.town].n + ', ' + d.st : SNAME[d.st] + ', no town on record';
+    return crumbs() +
+      '<h2>' + esc(d.name) + ' <span class="pb ' + esc(d.priority) + '">' + esc(d.priority) + '</span></h2>' +
+      '<div class="meta">' + esc(d.id) + ' · ' + esc(where) + (d.type && d.type !== 'Individual' ? ' · ' + esc(d.type) : '') + '</div>' +
+      '<div class="place"><b>' + esc(BSHORT[d.basis]) + '.</b> ' + esc(BLONG[d.basis]) + (d.placeNote ? ' ' + esc(d.placeNote) : '') + '</div>' +
+      (d.possibleMatches ? '<div class="warn"><b>Possible duplicate to check.</b> ' + esc(d.possibleMatches) + '</div>' : '') +
+      '<dl class="kv">' +
+        kv('New England tie', esc(d.tie)) +
+        kv('City or region on the master list', esc(d.city) + (d.home && d.home !== d.st ? ' (' + esc(d.home) + ')' : '')) +
+        kv('Title or organization', txt(d.title)) +
+        kv('Source lists', d.listArr.map(function (l) { return '<span class="tag">' + esc(l) + '</span>'; }).join('') + (d.matchBasis ? ' <span class="mono" style="font-size:11px">(' + esc(d.matchBasis) + ')</span>' : '')) +
+        (rows.length ? '<dt>Recorded giving</dt><dd><table class="money">' + rows.map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td>' + full$(r[1]) + '</td></tr>'; }).join('') + '</table></dd>' : '') +
+        kv('Linked foundation', txt(d.foundation)) +
+        kv('Defense or national security link', txt(d.defense)) +
+        kv('Wealth or investor signal', txt(d.wealth)) +
+        kv('Affiliations', txt(d.affiliations)) +
+        kv('Notes', txt(d.notes)) +
+        kv('Priority on source lists', txt(d.sourcePriority)) +
+        kv('Where found on source sheets', txt(d.whereFound)) +
+        kv('Contact or LinkedIn', linkify(d.contact)) +
+        kv('Sources', linkify(d.sources)) +
+      '</dl>';
+  }
+  function renderSide() {
+    var html;
+    if (S.person) html = sidePerson(byId[S.person]);
+    else if (S.town) html = sideTown(S.town);
+    else if (S.st) html = sideState(S.st, current);
+    else html = sideOverview(current);
+    $('side').innerHTML = html;
+    $('side').scrollTop = 0;
+  }
+  $('side').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-id],[data-town],[data-go]');
+    if (!b) return;
+    if (b.hasAttribute('data-go')) {
+      var g = b.getAttribute('data-go');
+      if (g === 'ne') return clearState();
+      if (g === 'st') return selectState(b.getAttribute('data-st'));
+      if (g === 'town') { S.person = null; paintTowns(); drawMarks(); renderSide(); return; }
+    }
+    if (b.hasAttribute('data-town')) return selectTown(b.getAttribute('data-town'), true);
+    selectPerson(b.getAttribute('data-id'), true);
+  });
+
+  /* ------------------------------------------------------ selection */
+  function selectState(st) {
+    S.st = st; S.town = null; S.person = null;
+    render();
+    setVB(fit(D.states[st].bb, 0.08));
+  }
+  function clearState() {
+    S.st = null; S.town = null; S.person = null;
+    render();
+    setVB(home());
+  }
+  function selectTown(t, zoom) {
+    var T = D.towns[t];
+    if (S.town === t && !S.person) { S.town = null; paintTowns(); drawMarks(); renderSide(); return; }
+    if (S.st && S.st !== T.st) S.st = null;
+    S.town = t; S.person = null;
+    if (zoom) {
+      var span = Math.min(vb[2], homeW / 5), c = T.c;
+      render();
+      setVB([c[0] - span / 2, c[1] - span / 2, span, span]);
+    } else render();
+  }
+  function selectPerson(id, scroll) {
+    var d = byId[id];
+    if (S.st && S.st !== d.st) S.st = null;
+    S.person = id; S.town = d.town || null;
+    render();
+    if (d.town && !inView(D.towns[d.town].c)) { var c = D.towns[d.town].c; setVB([c[0] - vb[2] / 2, c[1] - vb[3] / 2, vb[2], vb[3]]); }
+    if (scroll && window.innerWidth <= 980) $('side').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function inView(c) { return c[0] > vb[0] && c[0] < vb[0] + vb[2] && c[1] > vb[1] && c[1] < vb[1] + vb[3]; }
+
+  /* ------------------------------------------------------------ table */
+  var ths = document.querySelectorAll('#tbl th');
+  ths.forEach(function (th) {
+    th.tabIndex = 0;
+    function go() {
+      var k = th.getAttribute('data-k');
+      if (S.sortK === k) S.sortDir *= -1; else { S.sortK = k; S.sortDir = (k === 'top' || k === 'nLists') ? -1 : 1; }
+      renderTable();
+    }
+    th.addEventListener('click', go);
+    th.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+  function renderTable() {
+    var k = S.sortK, dir = S.sortDir;
+    var rows = current.slice().sort(function (a, b) {
+      var r;
+      if (k === 'priority') r = priRank(a.priority) - priRank(b.priority);
+      else if (k === 'top' || k === 'nLists') r = (a[k] || 0) - (b[k] || 0);
+      else if (k === 'basis') r = BASIS.indexOf(a.basis) - BASIS.indexOf(b.basis);
+      else r = String(a[k] || '~').localeCompare(String(b[k] || '~'));
+      return r * dir || cmpDefault(a, b);
+    });
+    ths.forEach(function (th) { th.setAttribute('aria-sort', th.getAttribute('data-k') === k ? (dir > 0 ? 'ascending' : 'descending') : 'none'); });
+    document.querySelector('#tbl tbody').innerHTML = rows.map(function (d) {
+      return '<tr tabindex="0" data-id="' + esc(d.id) + '"><td>' + esc(d.name) + '</td><td>' + esc(d.townName || 'No town') + '</td><td class="st">' + d.st + '</td>' +
+        '<td><span class="pb ' + esc(d.priority) + '">' + esc(d.priority) + '</span></td><td class="num">' + d.nLists + '</td>' +
+        '<td class="num">' + fmt$(d.top) + '</td><td>' + esc(BTAG[d.basis]) + '</td><td class="t">' + esc((d.title || '').split(' | ')[0]) + '</td></tr>';
+    }).join('');
+    $('tbl-head').textContent = S.st ? 'Everyone on the list in ' + SNAME[S.st] : 'Everyone on the New England list';
+    $('tcount').textContent = rows.length + ' of ' + P.length + ' shown. Largest figure is the biggest single dollar value in the giving columns, not a sum. Click a row for the full record.';
+  }
+  var tbody = document.querySelector('#tbl tbody');
+  function rowGo(e) {
+    var tr = e.target.closest('tr[data-id]');
+    if (!tr) return;
+    selectPerson(tr.getAttribute('data-id'), false);
+    $('side').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  tbody.addEventListener('click', rowGo);
+  tbody.addEventListener('keydown', function (e) { if (e.key === 'Enter') rowGo(e); });
+
+  /* ------------------------------------------------------ unplaced */
+  function renderUnplaced() {
+    var un = P.filter(function (d) { return !d.town; });
+    $('ucount').textContent = un.length + ' people have a New England state on the master list but no usable town. They count in the state totals above and appear in the table.';
+    $('unplaced').innerHTML = STATES.filter(function (st) { return un.some(function (d) { return d.st === st; }); }).map(function (st) {
+      var ds = un.filter(function (d) { return d.st === st; }).sort(cmpDefault);
+      return '<div class="panel"><h4>' + SNAME[st] + ' (' + ds.length + ')</h4><ul class="rowlist">' + ds.map(function (d) {
+        return '<li><button type="button" class="rowbtn" data-id="' + esc(d.id) + '"><span class="pb ' + esc(d.priority) + '">' + esc(d.priority) + '</span><span class="grow">' + esc(d.name) +
+          '<span class="sm">' + esc(d.placeNote || d.tie) + '</span></span></button></li>';
+      }).join('') + '</ul></div>';
+    }).join('');
+  }
+  $('unplaced').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-id]');
+    if (b) { selectPerson(b.getAttribute('data-id'), false); $('side').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+  });
+
+  $('footer').innerHTML = esc('Source: Rosc Master Conservative Donor Prospect List, New England tab (' + D.neRows + ' rows, drawn from the ' +
+    D.masterRows.toLocaleString('en-US') + '-row Master tab), read 24 November 2026. A person is assigned to the state in the sheet’s New England state column. ' +
+    'Villages are placed in their Census town (Old Greenwich and Riverside in Greenwich, Yalesville in Wallingford, Etna in Hanover, Port Clyde in St. George, ' +
+    'Osterville in Barnstable, East Falmouth in Falmouth, South Hamilton in Hamilton, Waban and Chestnut Hill in Newton, Charlestown in Boston). ' +
+    'Where a row lists several places, the first is used. People who live outside New England are placed at the town of their New England tie and drawn as rings. ' +
+    'Dollar figures are copied from the master list and inherit its matching caveats. For internal Rosc use only. Do not post or forward outside Rosc.');
+
+  /* ----------------------------------------------------------- render */
+  var current = [];
+  function render() {
+    current = P.filter(function (p) { return passes(p, false); });
+    if (S.person && !passes(byId[S.person], false)) S.person = null;
+    byTown = {};
+    current.forEach(function (d) { if (d.town) (byTown[d.town] = byTown[d.town] || []).push(d); });
+    $('reset').hidden = !filtersOn();
+    renderStates();
+    paintTowns();
+    drawMarks();
+    renderSide();
+    renderTable();
+  }
+  renderUnplaced();
+  lastW = svg.getBoundingClientRect().width;
+  homeW = home()[2];
+  vb = home();
+  svg.setAttribute('viewBox', vb.join(' '));
+  render();
+}
+</script>

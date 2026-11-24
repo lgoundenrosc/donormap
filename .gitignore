@@ -1,0 +1,6 @@
+# Raw sheet dumps and downloaded boundary files stay local.
+new-england/work/
+new-england/geo/
+node_modules/
+.env
+*.env
