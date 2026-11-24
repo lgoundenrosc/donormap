@@ -42,6 +42,18 @@ async function serve(page) {
   await p.click('#z-bos'); await p.waitForTimeout(300);
   await (await p.$('.geo-wrap')).screenshot({ path: out + '/d5.png' });
 
+  await p.click('#z-all'); await p.waitForTimeout(200);
+  await p.evaluate(() => window.scrollTo(0, 0));
+  await p.screenshot({ path: out + '/l-top.png' });
+  await p.emulateMedia({ colorScheme: 'dark' }); await p.waitForTimeout(300);
+  await p.screenshot({ path: out + '/k-top.png' });
+  await (await p.$('.geo-wrap')).screenshot({ path: out + '/k-map.png' });
+  await p.click('.stc[data-st="MA"]'); await p.waitForTimeout(300);
+  const pr = await p.$('#side [data-town]'); if (pr) { await pr.click(); await p.waitForTimeout(300); }
+  const pq = await p.$('#side [data-id]'); if (pq) { await pq.click(); await p.waitForTimeout(300); }
+  await (await p.$('.geo-wrap')).screenshot({ path: out + '/k-person.png' });
+  await (await p.$('.tbl-wrap')).screenshot({ path: out + '/k-table.png', clip: undefined });
+  await p.emulateMedia({ colorScheme: 'light' });
   const m = await b.newPage({ viewport: { width: 390, height: 844 } });
   m.on('pageerror', e => errs.push('m:' + e));
   await serve(m);
