@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Donor Prospect Explorer</title>
+<style>
+:root { color-scheme: light; }
+/* Rosc internal. Palette follows the ARI market map:
+   navy #182042, page #DFDFDF, warm ivory #F5F0E4, rust accent, gold sparingly. */
+:root {
+  --navy: #182042;
+  --navy-mid: #2A3260;
+  --navy-deep: #0F1430;
+  --navy-pale: #A9B4D8;
+  --page: #DFDFDF;
+  --ivory: #F5F0E4;
+  --card: #FCFBF8;
+  --gold: #D1B385;
+  --rust: #A0442A;
+  --rust-deep: #7C3220;
+  --rust-wash: #F1DED6;
+  --grey: #6E6E72;
+  --grey-line: #C3C3C6;
+  --grey-wash: #E7E7E5;
+  --line: #DAD7CF;
+  --ink: #1C1C1E;
+  --ink-soft: #46464B;
+  --ink-mute: #6E6E72;
+  /* priority A to D: one navy ramp, dark to light (ordinal, so sequential) */
+  --pA: #182042;
+  --pB: #4E5A96;
+  --pC: #8C97C9;
+  --pD: #C9CEE5;
+  /* map ramp, light to dark */
+  --m0: #ECEBE6;
+  --m1: #DCE0EE;
+  --m2: #B3BBDC;
+  --m3: #7F8BC1;
+  --m4: #45518E;
+  --m5: #182042;
+  --sans: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --r: 6px;
+  --shadow: 0 1px 2px rgba(24, 32, 66, .10), 0 6px 18px rgba(24, 32, 66, .06);
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+button { font: inherit; color: inherit; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 22px 20px 80px; }
+.num, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* header */
+.doc-header { background: var(--navy); border-left: 9px solid var(--rust); border-radius: var(--r); color: #fff; padding: 22px 26px 20px; box-shadow: var(--shadow); }
+.eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin: 0 0 8px; }
+.doc-header h1 { margin: 0 0 6px; font-size: 27px; letter-spacing: -.01em; font-weight: 600; }
+.doc-header p.dek { margin: 0; color: #D4D8EA; max-width: 82ch; font-size: 14.5px; }
+
+/* filter bar */
+.filters { position: sticky; top: 0; z-index: 20; margin: 14px -20px 0; padding: 10px 20px; background: rgba(223,223,223,.94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--grey-line); }
+.frow { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.fgroup { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.flabel { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-mute); margin-right: 2px; }
+.search { flex: 1 1 220px; min-width: 180px; max-width: 340px; height: 32px; border: 1px solid var(--grey-line); border-radius: 5px; padding: 0 10px; font: inherit; background: #fff; }
+.search:focus { outline: 2px solid var(--navy-pale); border-color: var(--navy); }
+.chip { height: 28px; padding: 0 10px; border-radius: 14px; border: 1px solid var(--grey-line); background: #fff; cursor: pointer; font-size: 12.5px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.chip:hover { border-color: var(--navy-mid); }
+.chip[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+.chip .sw { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.chip[aria-pressed="true"] .sw { box-shadow: 0 0 0 1.5px #fff; }
+select.sel { height: 28px; border-radius: 14px; border: 1px solid var(--grey-line); background: #fff; padding: 0 8px; font: inherit; font-size: 12.5px; max-width: 220px; }
+.active-row { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 26px; }
+.count { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); margin-right: 6px; }
+.count b { color: var(--ink); font-weight: 600; }
+.pill-x { height: 24px; padding: 0 6px 0 10px; border-radius: 12px; background: var(--rust-wash); color: var(--rust-deep); border: 1px solid #E2C2B6; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.pill-x span.x { font-size: 14px; line-height: 1; }
+.linkbtn { background: none; border: 0; color: var(--rust); cursor: pointer; font-size: 12.5px; text-decoration: underline; text-underline-offset: 2px; padding: 0 4px; }
+
+/* KPI tiles */
+.kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin: 16px 0; box-shadow: var(--shadow); }
+.kpi { background: var(--card); padding: 12px 16px 13px; }
+.kpi .k { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-mute); display: block; }
+.kpi .v { font-family: var(--mono); font-size: 24px; font-weight: 500; color: var(--navy); line-height: 1.25; display: block; margin-top: 3px; }
+.kpi .s { font-size: 12px; color: var(--ink-mute); }
+
+/* cards */
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+.card { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); padding: 16px 18px 14px; min-width: 0; }
+.span7 { grid-column: span 7; } .span5 { grid-column: span 5; } .span6 { grid-column: span 6; } .span12 { grid-column: span 12; }
+.card h2 { font-size: 15.5px; margin: 0 0 2px; font-weight: 600; color: var(--navy); }
+.card .sub { font-size: 12.5px; color: var(--ink-mute); margin: 0 0 10px; }
+.card .foot { font-size: 12px; color: var(--ink-mute); margin-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink-soft); margin: 2px 0 8px; align-items: center; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+/* map */
+#map svg { display: block; width: 100%; height: auto; }
+#map .state { stroke: #fff; stroke-width: .8; cursor: pointer; }
+#map .inset-box { fill: none; stroke: var(--grey-line); stroke-dasharray: 4 3; }
+#map .cap { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; fill: var(--ink-mute); }
+#map .lbl { font-family: var(--mono); font-size: 13px; pointer-events: none; font-weight: 600; }
+.ramp { display: flex; align-items: center; gap: 0; font-family: var(--mono); font-size: 10.5px; color: var(--ink-mute); }
+.ramp span.b { display: inline-block; width: 34px; height: 9px; margin-right: 2px; }
+.ramp .t { display: flex; gap: 2px; }
+.ramp .t span { width: 34px; text-align: left; }
+
+/* bar rows */
+.bars { display: flex; flex-direction: column; gap: 5px; }
+.brow { display: grid; grid-template-columns: 150px 1fr 54px; align-items: center; gap: 10px; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+.brow:hover { background: var(--grey-wash); }
+.brow.sel { background: var(--rust-wash); }
+.brow .nm { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+.brow .val { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--ink-soft); }
+.track { height: 14px; display: flex; gap: 2px; }
+.seg { height: 100%; }
+.seg:first-child { border-radius: 0; }
+.seg:last-child { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+.bars.inst .brow { grid-template-columns: 220px 1fr 46px; }
+
+/* overlap matrix */
+#overlap { overflow-x: auto; }
+#overlap table { border-collapse: separate; border-spacing: 2px; font-size: 11.5px; }
+#overlap th { font-weight: 500; color: var(--ink-soft); text-align: right; padding-right: 6px; white-space: nowrap; }
+#overlap th.col { writing-mode: vertical-rl; transform: rotate(180deg); text-align: left; padding: 0 0 4px; height: 112px; width: 38px; line-height: 38px; vertical-align: bottom; }
+#overlap td { width: 38px; height: 30px; text-align: center; font-family: var(--mono); border-radius: 3px; cursor: pointer; }
+#overlap td.empty { cursor: default; }
+#overlap td.diag { background: var(--grey-wash); color: var(--ink-mute); cursor: default; font-size: 10.5px; }
+#overlap td.cell:hover { outline: 2px solid var(--rust); }
+#overlap td.sel { outline: 2px solid var(--rust); }
+
+/* top givers */
+.givers { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 28px; }
+.grow { display: grid; grid-template-columns: 20px 170px 1fr 78px; gap: 8px; align-items: center; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+.grow:hover { background: var(--grey-wash); }
+.grow .rk { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); text-align: right; }
+.grow .nm { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grow .bar { height: 10px; border-radius: 0 4px 4px 0; background: var(--navy); min-width: 2px; }
+.grow .val { font-family: var(--mono); font-size: 12px; text-align: right; }
+.pbadge { display: inline-flex; width: 18px; height: 18px; border-radius: 3px; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; font-weight: 600; flex: none; }
+.pbA { background: var(--pA); color: #fff; } .pbB { background: var(--pB); color: #fff; } .pbC { background: var(--pC); color: var(--navy-deep); } .pbD { background: var(--pD); color: var(--navy-deep); }
+
+/* table */
+.tbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.btn { height: 30px; padding: 0 12px; border-radius: 5px; border: 1px solid var(--navy); background: var(--navy); color: #fff; cursor: pointer; font-size: 12.5px; }
+.btn.ghost { background: #fff; color: var(--navy); }
+.btn:disabled { opacity: .4; cursor: default; }
+.tscroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 5px; }
+table.pt { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+table.pt th { text-align: left; font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-mute); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--grey-line); background: var(--ivory); cursor: pointer; white-space: nowrap; user-select: none; }
+table.pt th.sorted { color: var(--navy); }
+table.pt td { padding: 7px 10px; border-bottom: 1px solid var(--grey-wash); vertical-align: top; }
+table.pt tr.r { cursor: pointer; }
+table.pt tr.r:hover td { background: #F3F1EA; }
+table.pt td.money { font-family: var(--mono); text-align: right; white-space: nowrap; }
+table.pt th.money { text-align: right; }
+.nm-cell b { font-weight: 600; }
+.nm-cell .loc { display: block; color: var(--ink-mute); font-size: 12px; }
+.lpill { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 3px; background: var(--grey-wash); color: var(--ink-soft); margin: 0 3px 3px 0; white-space: nowrap; }
+.clip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 330px; }
+.pager { display: flex; gap: 6px; align-items: center; justify-content: flex-end; margin-top: 10px; font-size: 12.5px; color: var(--ink-soft); }
+
+/* drawer */
+.scrim { position: fixed; inset: 0; background: rgba(15,20,48,.35); z-index: 40; display: none; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); background: var(--card); z-index: 41; box-shadow: -8px 0 30px rgba(15,20,48,.2); transform: translateX(105%); transition: transform .18s ease; display: flex; flex-direction: column; }
+.drawer.open { transform: none; }
+.drawer.open + .scrim, .scrim.open { display: block; }
+.dhead { background: var(--navy); color: #fff; padding: 16px 20px 14px; border-left: 6px solid var(--rust); position: relative; }
+.dhead h3 { margin: 0; font-size: 20px; font-weight: 600; padding-right: 30px; }
+.dhead .meta { color: #C9CEE5; font-size: 12.5px; margin-top: 3px; }
+.dhead .close { position: absolute; right: 12px; top: 10px; background: none; border: 0; color: #fff; font-size: 24px; cursor: pointer; line-height: 1; }
+.dbody { overflow-y: auto; padding: 14px 20px 30px; }
+.dsec { margin-bottom: 16px; }
+.dsec h4 { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--rust); margin: 0 0 6px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.kv { display: grid; grid-template-columns: 150px 1fr; gap: 4px 12px; font-size: 13px; }
+.kv dt { color: var(--ink-mute); }
+.kv dd { margin: 0; word-break: break-word; }
+.dlist { margin: 0; padding-left: 16px; font-size: 13px; }
+.dlist li { margin-bottom: 3px; word-break: break-word; }
+.money-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.money-grid div { background: #fff; padding: 7px 10px; }
+.money-grid .k { font-size: 10.5px; color: var(--ink-mute); display: block; line-height: 1.3; }
+.money-grid .v { font-family: var(--mono); font-size: 14px; }
+a { color: var(--rust-deep); }
+.warn { background: #F3E7CD; border-left: 3px solid #8A6410; padding: 6px 10px; font-size: 12.5px; border-radius: 3px; }
+
+/* tooltip */
+#tip { position: fixed; pointer-events: none; z-index: 60; background: var(--navy-deep); color: #fff; font-size: 12px; padding: 7px 10px; border-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,.25); max-width: 260px; display: none; line-height: 1.45; }
+#tip b { font-weight: 600; }
+#tip .m { font-family: var(--mono); color: var(--gold); }
+
+.notes { margin-top: 22px; font-size: 12.5px; color: var(--ink-soft); }
+.notes h2 { font-size: 14px; color: var(--navy); margin: 0 0 6px; }
+.notes ul { margin: 0; padding-left: 18px; }
+.notes li { margin-bottom: 4px; }
+.empty-msg { color: var(--ink-mute); font-size: 13px; padding: 20px 0; text-align: center; }
+
+@media (max-width: 980px) {
+  .span7, .span5, .span6 { grid-column: span 12; }
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .kpi:last-child { grid-column: span 2; }
+  .givers { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .wrap { padding: 14px 16px 60px; }
+  .filters { margin: 12px -16px 0; padding: 8px 16px; position: static; }
+  .brow { grid-template-columns: 110px 1fr 44px; }
+  .bars.inst .brow { grid-template-columns: 130px 1fr 40px; }
+  .grow { grid-template-columns: 18px 120px 1fr 66px; }
+  .kv { grid-template-columns: 1fr; gap: 0 0; }
+  .kv dt { margin-top: 6px; }
+  .doc-header h1 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="doc-header">
+    <p class="eyebrow">Rosc internal &middot; draft v0.1 &middot; data pulled 24 Nov 2026</p>
+    <h1>Conservative donor prospects</h1>
+    <p class="dek">All 2,828 people on the Master tab of the Rosc Master Conservative Donor Prospect List, drawn from nine source lists. Click any state, bar or matrix cell to filter every view at once. Click a name for the full record.</p>
+  </header>
+
+  <div class="filters" id="filters">
+    <div class="frow">
+      <input class="search" id="q" type="search" placeholder="Search name, firm, affiliation, notes" aria-label="Search prospects">
+      <div class="fgroup" id="fPri"><span class="flabel">Priority</span></div>
+      <div class="fgroup">
+        <span class="flabel">Show only</span>
+        <button class="chip" data-tog="multi" aria-pressed="false">On 2+ lists</button>
+        <button class="chip" data-tog="ne" aria-pressed="false">New England tie</button>
+        <button class="chip" data-tog="natsec" aria-pressed="false">Defense or nat-sec link</button>
+        <button class="chip" data-tog="money" aria-pressed="false">Documented political giving</button>
+      </div>
+      <div class="fgroup">
+        <span class="flabel">List</span>
+        <select class="sel" id="fList" aria-label="Source list"><option value="">All nine lists</option></select>
+      </div>
+    </div>
+    <div class="active-row" id="active"></div>
+  </div>
+
+  <section class="kpis" id="kpis" aria-live="polite"></section>
+
+  <div class="grid">
+    <section class="card span7">
+      <h2>Where they live</h2>
+      <p class="sub">Prospects per state, for the 1,025 records with a US state on file. Click a state to filter.</p>
+      <div class="legend"><div class="ramp" id="ramp"></div></div>
+      <div id="map"><svg viewBox="0 0 1000 568" role="img" aria-label="Map of prospects by state"></svg></div>
+      <p class="foot" id="mapfoot"></p>
+    </section>
+
+    <section class="card span5">
+      <h2>Source lists</h2>
+      <p class="sub">Prospects on each list, split by Master priority. A person on two lists counts on both.</p>
+      <div class="legend" id="priLegend"></div>
+      <div class="bars" id="lists"></div>
+    </section>
+
+    <section class="card span6">
+      <h2>Where the lists overlap</h2>
+      <p class="sub">People who appear on both lists. Darker means more shared names. Click a cell to see them.</p>
+      <div id="overlap"></div>
+    </section>
+
+    <section class="card span6">
+      <h2>Institutional ties</h2>
+      <p class="sub">Prospects with a named board seat, donor listing or council role at each institution.</p>
+      <div class="bars inst" id="inst"></div>
+    </section>
+
+    <section class="card span12">
+      <h2>Largest documented political giving</h2>
+      <p class="sub" id="giversSub">Top 30 in the current view, by best available documented total (see notes). Click a name for the full record.</p>
+      <div class="givers" id="givers"></div>
+    </section>
+
+    <section class="card span12">
+      <div class="tbar">
+        <div><h2>Prospect table</h2><p class="sub" style="margin:0" id="tsub"></p></div>
+        <div style="display:flex;gap:8px"><button class="btn ghost" id="csv">Download view as CSV</button></div>
+      </div>
+      <div class="tscroll"><table class="pt" id="table"><thead></thead><tbody></tbody></table></div>
+      <div class="pager" id="pager"></div>
+    </section>
+  </div>
+
+  <section class="notes">
+    <h2>Notes on the data</h2>
+    <ul>
+      <li><b>Documented political giving</b> is the larger of two figures: the sum of 527 giving 2025-26, 527 giving 2021-24 and state PAC giving, or the New England list's all-years totals. The NE totals already span every year, so adding them on top would double count. Every raw field is in the record panel.</li>
+      <li><b>Largest published gift band</b> is the floor of the band an institution publishes (for example "$100,000 and up"). It shows up in records but isn't in the political giving total. One record (a band floor of $2) looks like a data-entry slip.</li>
+      <li>1,792 records carry no state, mostly published donor rolls that list names only. They drop out of the map but stay in every other view.</li>
+      <li>De-duplication across lists matched on name and, where available, state. 36 records carry a "Possible matches to check" note. Those are shown in the record panel and are worth a look before outreach.</li>
+      <li>Source: Rosc Master Conservative Donor Prospect List, Master tab (2,828 rows, 29 columns). The New England and On 2+ lists tabs are filtered copies of Master, so both are reachable here through the filters above.</li>
+    </ul>
+  </section>
+</div>
+
+<aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-label="Prospect record"></aside>
+<div class="scrim" id="scrim"></div>
+<div id="tip"></div>
+
+<script>
+/*DATA*/
+</script>
+<script>
+/* Lifted verbatim from lgoundenrosc/Assets maps/us-base-map.html. Read that
+   file's notes before touching AK_INSET, insetFit or the inset boxes. */
+/*MAPJS*/
+</script>
+<script>
+(function () {
+'use strict';
+var P = window.PROSPECTS, LISTS = META.lists, INST = META.inst;
+var PRI = ['A', 'B', 'C', 'D'];
+var PRI_COL = { A: 'var(--pA)', B: 'var(--pB)', C: 'var(--pC)', D: 'var(--pD)' };
+var SHORT = { 'Center for Strategic and International Studies': 'CSIS', 'Center for a New American Security': 'CNAS',
+  'Ronald Reagan Presidential Foundation and Institute': 'Reagan Foundation', 'Jewish Institute for National Security of America': 'JINSA',
+  'Foundation for Defense of Democracies': 'FDD', 'Special Operations Warrior Foundation': 'Special Ops Warrior Fdn.',
+  'West Point Association of Graduates': 'West Point AOG', 'U.S. Naval Academy Foundation': 'USNA Foundation',
+  'American Enterprise Institute': 'AEI', 'Foundation for American Innovation': 'Fdn. for American Innovation' };
+var STATE_NAMES = {AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',DC:'District of Columbia',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',PR:'Puerto Rico'};
+var byId = {};
+P.forEach(function (p, i) {
+  p._i = i; byId[p.id] = p;
+  p._hay = [p.n, p.t, p.af, p.no, p.ci, p.lf, p.w, p.d, p.id].join(' ').toLowerCase();
+  p._ns = !!(p.d && !/^none/i.test(p.d));
+  p._lists = LISTS.filter(function (_, k) { return p.lm & (1 << k); });
+});
+
+var S = { q: '', pri: {}, multi: false, ne: false, natsec: false, money: false, list: null, state: null, inst: null, pair: null,
+  sort: { k: 'gt', dir: -1 }, page: 0 };
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function fmt$(v) {
+  if (v == null) return '';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M';
+  if (v >= 1e3) return '$' + Math.round(v / 1e3) + 'K';
+  return '$' + v;
+}
+function fmtFull$(v) { return v == null ? '-' : '$' + Math.round(v).toLocaleString('en-US'); }
+function n(v) { return v.toLocaleString('en-US'); }
+
+/* filtering. skip names one dimension to ignore, so a chart can show its own alternatives */
+function pass(p, skip) {
+  var anyPri = S.pri.A || S.pri.B || S.pri.C || S.pri.D;
+  if (skip !== 'pri' && anyPri && !S.pri[p.p]) return false;
+  if (S.multi && p.nl < 2) return false;
+  if (S.ne && !p.ne && !p.nes) return false;
+  if (S.natsec && !p._ns) return false;
+  if (S.money && !p.gt) return false;
+  if (skip !== 'list' && S.list != null && !(p.lm & (1 << S.list))) return false;
+  if (skip !== 'list' && S.pair && ((p.lm & S.pair[2]) !== S.pair[2])) return false;
+  if (skip !== 'state' && S.state && p.st !== S.state) return false;
+  if (skip !== 'inst' && S.inst != null && (!p.in || p.in.indexOf(S.inst) < 0)) return false;
+  if (S.q) { var terms = S.q.split(/\s+/); for (var i = 0; i < terms.length; i++) if (p._hay.indexOf(terms[i]) < 0) return false; }
+  return true;
+}
+function rows(skip) { return P.filter(function (p) { return pass(p, skip); }); }
+
+/* tooltip */
+var tip = document.getElementById('tip');
+function showTip(e, html) { tip.innerHTML = html; tip.style.display = 'block'; moveTip(e); }
+function moveTip(e) {
+  var x = e.clientX + 14, y = e.clientY + 14, w = tip.offsetWidth, h = tip.offsetHeight;
+  if (x + w > innerWidth - 8) x = e.clientX - w - 14;
+  if (y + h > innerHeight - 8) y = e.clientY - h - 14;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function hideTip() { tip.style.display = 'none'; }
+function bindTips(root) {
+  root.querySelectorAll('[data-tip]').forEach(function (el) {
+    el.addEventListener('mouseenter', function (e) { showTip(e, el.getAttribute('data-tip')); });
+    el.addEventListener('mousemove', moveTip);
+    el.addEventListener('mouseleave', hideTip);
+  });
+}
+function priMix(arr) {
+  var c = { A: 0, B: 0, C: 0, D: 0 }; arr.forEach(function (p) { c[p.p]++; }); return c;
+}
+function mixLine(c) { return PRI.map(function (k) { return k + ' <span class="m">' + c[k] + '</span>'; }).join(' &middot; '); }
+
+/* ---------- filter controls ---------- */
+var fPri = document.getElementById('fPri');
+PRI.forEach(function (k) {
+  var b = document.createElement('button');
+  b.className = 'chip'; b.setAttribute('aria-pressed', 'false'); b.dataset.pri = k;
+  b.innerHTML = '<span class="sw" style="background:' + PRI_COL[k] + '"></span>' + k;
+  b.onclick = function () { S.pri[k] = !S.pri[k]; S.page = 0; render(); };
+  fPri.appendChild(b);
+});
+document.querySelectorAll('[data-tog]').forEach(function (b) {
+  b.onclick = function () { var k = b.dataset.tog; S[k] = !S[k]; S.page = 0; render(); };
+});
+var fList = document.getElementById('fList');
+LISTS.forEach(function (l, i) { var o = document.createElement('option'); o.value = i; o.textContent = l; fList.appendChild(o); });
+fList.onchange = function () { S.list = fList.value === '' ? null : +fList.value; S.pair = null; S.page = 0; render(); };
+var qEl = document.getElementById('q'), qT;
+qEl.addEventListener('input', function () { clearTimeout(qT); qT = setTimeout(function () { S.q = qEl.value.trim().toLowerCase(); S.page = 0; render(); }, 140); });
+
+function renderActive(count) {
+  var a = [];
+  var anyPri = PRI.filter(function (k) { return S.pri[k]; });
+  if (anyPri.length) a.push(['Priority ' + anyPri.join(', '), function () { S.pri = {}; }]);
+  if (S.multi) a.push(['On 2+ lists', function () { S.multi = false; }]);
+  if (S.ne) a.push(['New England tie', function () { S.ne = false; }]);
+  if (S.natsec) a.push(['Defense or nat-sec link', function () { S.natsec = false; }]);
+  if (S.money) a.push(['Documented political giving', function () { S.money = false; }]);
+  if (S.list != null) a.push(['List: ' + LISTS[S.list], function () { S.list = null; }]);
+  if (S.pair) a.push(['On both ' + LISTS[S.pair[0]] + ' and ' + LISTS[S.pair[1]], function () { S.pair = null; }]);
+  if (S.state) a.push(['State: ' + (STATE_NAMES[S.state] || S.state), function () { S.state = null; }]);
+  if (S.inst != null) a.push(['Tie: ' + (SHORT[INST[S.inst]] || INST[S.inst]), function () { S.inst = null; }]);
+  if (S.q) a.push(['Search: "' + S.q + '"', function () { S.q = ''; qEl.value = ''; }]);
+  var el = document.getElementById('active');
+  el.innerHTML = '<span class="count">Showing <b>' + n(count) + '</b> of ' + n(P.length) + '</span>';
+  a.forEach(function (it) {
+    var b = document.createElement('button'); b.className = 'pill-x';
+    b.innerHTML = esc(it[0]) + '<span class="x" aria-hidden="true">&times;</span>';
+    b.setAttribute('aria-label', 'Remove filter ' + it[0]);
+    b.onclick = function () { it[1](); S.page = 0; render(); };
+    el.appendChild(b);
+  });
+  if (a.length > 1) {
+    var c = document.createElement('button'); c.className = 'linkbtn'; c.textContent = 'Clear all';
+    c.onclick = function () { S.q = ''; qEl.value = ''; S.pri = {}; S.multi = S.ne = S.natsec = S.money = false; S.list = S.state = S.inst = S.pair = null; S.page = 0; render(); };
+    el.appendChild(c);
+  }
+  document.querySelectorAll('[data-pri]').forEach(function (b) { b.setAttribute('aria-pressed', !!S.pri[b.dataset.pri]); });
+  document.querySelectorAll('[data-tog]').forEach(function (b) { b.setAttribute('aria-pressed', !!S[b.dataset.tog]); });
+  fList.value = S.list == null ? '' : S.list;
+}
+
+/* ---------- KPIs ---------- */
+function renderKpis(R) {
+  var A = 0, multi = 0, ne = 0, tot = 0, withMoney = 0;
+  R.forEach(function (p) { if (p.p === 'A') A++; if (p.nl > 1) multi++; if (p.ne || p.nes) ne++; if (p.gt) { tot += p.gt; withMoney++; } });
+  var pct = function (x) { return R.length ? Math.round(100 * x / R.length) + '% of view' : ''; };
+  var k = [
+    ['Prospects', n(R.length), R.length === P.length ? 'full Master tab' : 'after filters'],
+    ['Priority A', n(A), pct(A)],
+    ['On 2+ lists', n(multi), pct(multi)],
+    ['New England tie', n(ne), pct(ne)],
+    ['Documented political giving', fmt$(tot) || '$0', n(withMoney) + ' people with a figure']
+  ];
+  document.getElementById('kpis').innerHTML = k.map(function (x) {
+    return '<div class="kpi"><span class="k">' + x[0] + '</span><span class="v">' + x[1] + '</span><span class="s">' + x[2] + '</span></div>';
+  }).join('');
+}
+
+/* ---------- map ---------- */
+var BINS = [1, 5, 15, 40, 80];
+function binOf(c) { if (!c) return 0; var b = 0; for (var i = 0; i < BINS.length; i++) if (c >= BINS[i]) b = i + 1; return b; }
+document.getElementById('ramp').innerHTML =
+  '<span style="margin-right:8px">Prospects</span>' +
+  ['1-4', '5-14', '15-39', '40-79', '80+'].map(function (t, i) {
+    return '<span style="display:inline-flex;flex-direction:column;margin-right:2px"><span class="b" style="background:var(--m' + (i + 1) + ')"></span><span style="width:34px">' + t + '</span></span>';
+  }).join('') + '<span style="display:inline-flex;flex-direction:column;margin-left:8px"><span class="b" style="background:var(--m0);outline:1px solid var(--grey-line)"></span><span>none</span></span>';
+
+var mapSvg = document.querySelector('#map svg');
+var akBox = { x: 20, y: 413, w: 195, h: 140 }, hiBox = { x: 223, y: 456, w: 150, h: 97 };
+(function buildMap() {
+  var out = '';
+  function ring(part, proj) {
+    return part.map(function (pt, i) { var p = proj(pt[0], pt[1]); return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ') + ' Z';
+  }
+  Object.keys(US_STATES).forEach(function (k) {
+    out += '<path class="state" data-st="' + k + '" d="' + US_STATES[k].map(function (pt) { return ring(pt, projPt); }).join(' ') + '"/>';
+  });
+  out += '<rect class="inset-box" rx="4" x="' + akBox.x + '" y="' + akBox.y + '" width="' + akBox.w + '" height="' + akBox.h + '"/>';
+  out += '<rect class="inset-box" rx="4" x="' + hiBox.x + '" y="' + hiBox.y + '" width="' + hiBox.w + '" height="' + hiBox.h + '"/>';
+  out += '<text class="cap" x="' + (akBox.x + 6) + '" y="' + (akBox.y - 6) + '">NOT TO SCALE</text>';
+  out += '<text class="cap" x="' + (hiBox.x + 6) + '" y="' + (hiBox.y - 6) + '">NOT TO SCALE</text>';
+  var akProj = insetFit(AK_INSET, akBox.x, akBox.y, akBox.w, akBox.h, 8);
+  var hiProj = insetFit(HI_INSET, hiBox.x, hiBox.y, hiBox.w, hiBox.h, 8);
+  out += '<path class="state" data-st="AK" d="' + AK_INSET.map(function (pt) { return ring(pt, akProj); }).join(' ') + '"/>';
+  out += '<path class="state" data-st="HI" d="' + HI_INSET.map(function (pt) { return ring(pt, hiProj); }).join(' ') + '"/>';
+  out += '<path id="mapSel" d="" fill="none" stroke="var(--rust)" stroke-width="2.4" pointer-events="none"/><path id="mapHover" d="" fill="none" stroke="var(--rust)" stroke-width="1.6" pointer-events="none"/><g id="mapLabels"></g>';
+  mapSvg.innerHTML = out;
+  mapSvg.querySelectorAll('.state').forEach(function (el) {
+    var st = el.dataset.st;
+    el.addEventListener('click', function () { S.state = S.state === st ? null : st; S.page = 0; render(); });
+    el.addEventListener('mouseenter', function (e) { document.getElementById('mapHover').setAttribute('d', el.getAttribute('d')); showTip(e, el._tip || ''); });
+    el.addEventListener('mousemove', moveTip);
+    el.addEventListener('mouseleave', function () { document.getElementById('mapHover').setAttribute('d', ''); hideTip(); });
+  });
+})();
+/* label anchors for the busiest states, in lon/lat */
+var LABEL_AT = { MA: [-71.8, 42.3], CT: [-72.7, 41.6], NY: [-75.5, 42.9], FL: [-81.6, 28.3], TX: [-99, 31.2], VA: [-78.6, 37.6], CA: [-119.6, 37.2], NH: [-71.6, 43.6], GA: [-83.4, 32.7], IL: [-89.2, 40.0], TN: [-86.4, 35.8], SC: [-80.9, 33.9] };
+function renderMap(R) {
+  var c = {}, a = {}, none = 0, pr = 0;
+  R.forEach(function (p) { if (!p.st) { none++; return; } if (p.st === 'PR') pr++; c[p.st] = (c[p.st] || 0) + 1; if (p.p === 'A') a[p.st] = (a[p.st] || 0) + 1; });
+  mapSvg.querySelectorAll('.state').forEach(function (el) {
+    var st = el.dataset.st, v = c[st] || 0;
+    el.style.fill = 'var(--m' + binOf(v) + ')';
+    el.classList.toggle('sel', S.state === st);
+    el._tip = '<b>' + esc(STATE_NAMES[st]) + '</b><br><span class="m">' + n(v) + '</span> prospects' + (v ? '<br><span class="m">' + (a[st] || 0) + '</span> priority A' : '');
+  });
+  var selEl = S.state && mapSvg.querySelector('.state[data-st="' + S.state + '"]');
+  document.getElementById('mapSel').setAttribute('d', selEl ? selEl.getAttribute('d') : '');
+  var lab = '';
+  Object.keys(LABEL_AT).forEach(function (st) {
+    var v = c[st]; if (!v || v < 15) return;
+    var p = projPt(LABEL_AT[st][0], LABEL_AT[st][1]);
+    var dark = binOf(v) >= 3;
+    lab += '<text class="lbl" text-anchor="middle" x="' + p[0].toFixed(1) + '" y="' + (p[1] + 4.5).toFixed(1) + '" fill="' + (dark ? '#fff' : 'var(--navy)') + '">' + v + '</text>';
+  });
+  document.getElementById('mapLabels').innerHTML = lab;
+  document.getElementById('mapfoot').innerHTML = 'Not on the map: <span class="num">' + n(none) + '</span> with no state on file' + (pr ? ', <span class="num">' + pr + '</span> in Puerto Rico' : '') + '.';
+}
+
+/* ---------- source lists ---------- */
+document.getElementById('priLegend').innerHTML = PRI.map(function (k) { return '<span><i style="background:' + PRI_COL[k] + '"></i>Priority ' + k + '</span>'; }).join('');
+function renderLists(R) {
+  var data = LISTS.map(function (l, i) {
+    var sub = R.filter(function (p) { return p.lm & (1 << i); });
+    return { i: i, l: l, tot: sub.length, mix: priMix(sub) };
+  });
+  var max = Math.max.apply(null, data.map(function (d) { return d.tot; })) || 1;
+  var el = document.getElementById('lists');
+  el.innerHTML = data.map(function (d) {
+    var segs = PRI.filter(function (k) { return d.mix[k]; }).map(function (k) {
+      return '<span class="seg" style="width:' + (100 * d.mix[k] / max) + '%;background:' + PRI_COL[k] + '"></span>';
+    }).join('');
+    var tipH = '<b>' + esc(d.l) + '</b><br><span class="m">' + n(d.tot) + '</span> prospects<br>' + mixLine(d.mix);
+    return '<div class="brow' + (S.list === d.i ? ' sel' : '') + '" data-i="' + d.i + '" data-tip="' + esc(tipH) + '" role="button" tabindex="0"><span class="nm">' + esc(d.l) + '</span><span class="track">' + segs + '</span><span class="val">' + n(d.tot) + '</span></div>';
+  }).join('');
+  el.querySelectorAll('.brow').forEach(function (b) {
+    var go = function () { var i = +b.dataset.i; S.list = S.list === i ? null : i; S.pair = null; S.page = 0; render(); };
+    b.onclick = go; b.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+  });
+  bindTips(el);
+}
+
+/* ---------- overlap matrix ---------- */
+function renderOverlap(R) {
+  var k = LISTS.length, m = [], i, j;
+  for (i = 0; i < k; i++) { m.push([]); for (j = 0; j < k; j++) m[i].push(0); }
+  R.forEach(function (p) {
+    if (!p.lm) return;
+    for (i = 0; i < k; i++) if (p.lm & (1 << i)) for (j = 0; j < k; j++) if (p.lm & (1 << j)) m[i][j]++;
+  });
+  var max = 1;
+  for (i = 0; i < k; i++) for (j = 0; j < i; j++) max = Math.max(max, m[i][j]);
+  var h = '<table><thead><tr><th></th>';
+  for (j = 0; j < k - 1; j++) h += '<th class="col">' + esc(LISTS[j]) + '</th>';
+  h += '</tr></thead><tbody>';
+  for (i = 1; i < k; i++) {
+    h += '<tr><th>' + esc(LISTS[i]) + '</th>';
+    for (j = 0; j < k - 1; j++) {
+      if (j >= i) { h += '<td class="empty"></td>'; continue; }
+      var v = m[i][j];
+      if (!v) { h += '<td class="empty" style="background:var(--grey-wash)"></td>'; continue; }
+      var t = Math.sqrt(v / max), bin = t > .75 ? 5 : t > .5 ? 4 : t > .3 ? 3 : t > .15 ? 2 : 1;
+      var sel = S.pair && S.pair[0] === j && S.pair[1] === i;
+      var tipH = '<b>' + esc(LISTS[j]) + '</b> and <b>' + esc(LISTS[i]) + '</b><br><span class="m">' + v + '</span> people on both';
+      h += '<td class="cell' + (sel ? ' sel' : '') + '" data-a="' + j + '" data-b="' + i + '" data-tip="' + esc(tipH) + '" style="background:var(--m' + bin + ');color:' + (bin >= 3 ? '#fff' : 'var(--navy)') + '">' + v + '</td>';
+    }
+    h += '</tr>';
+  }
+  h += '</tbody></table>';
+  var el = document.getElementById('overlap');
+  el.innerHTML = h;
+  el.querySelectorAll('td.cell').forEach(function (td) {
+    td.onclick = function () {
+      var a = +td.dataset.a, b = +td.dataset.b;
+      S.pair = (S.pair && S.pair[0] === a && S.pair[1] === b) ? null : [a, b, (1 << a) | (1 << b)];
+      S.list = null; S.page = 0; render();
+    };
+  });
+  bindTips(el);
+}
+
+/* ---------- institutions ---------- */
+function renderInst(R) {
+  var data = INST.map(function (nm, i) {
+    var sub = R.filter(function (p) { return p.in && p.in.indexOf(i) >= 0; });
+    return { i: i, nm: nm, tot: sub.length, mix: priMix(sub) };
+  }).filter(function (d) { return d.tot || S.inst === d.i; }).sort(function (a, b) { return b.tot - a.tot; });
+  var max = data.length ? data[0].tot || 1 : 1;
+  var el = document.getElementById('inst');
+  if (!data.length) { el.innerHTML = '<p class="empty-msg">No institutional ties in the current view.</p>'; return; }
+  el.innerHTML = data.map(function (d) {
+    var segs = PRI.filter(function (k) { return d.mix[k]; }).map(function (k) {
+      return '<span class="seg" style="width:' + (100 * d.mix[k] / max) + '%;background:' + PRI_COL[k] + '"></span>';
+    }).join('');
+    var tipH = '<b>' + esc(d.nm) + '</b><br><span class="m">' + n(d.tot) + '</span> prospects<br>' + mixLine(d.mix);
+    return '<div class="brow' + (S.inst === d.i ? ' sel' : '') + '" data-i="' + d.i + '" data-tip="' + esc(tipH) + '" role="button" tabindex="0"><span class="nm">' + esc(SHORT[d.nm] || d.nm) + '</span><span class="track">' + segs + '</span><span class="val">' + n(d.tot) + '</span></div>';
+  }).join('');
+  el.querySelectorAll('.brow').forEach(function (b) {
+    var go = function () { var i = +b.dataset.i; S.inst = S.inst === i ? null : i; S.page = 0; render(); };
+    b.onclick = go; b.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+  });
+  bindTips(el);
+}
+
+/* ---------- top givers ---------- */
+function renderGivers(R) {
+  var top = R.filter(function (p) { return p.gt; }).sort(function (a, b) { return b.gt - a.gt; }).slice(0, 30);
+  var el = document.getElementById('givers');
+  if (!top.length) { el.innerHTML = '<p class="empty-msg">Nobody in the current view has a documented political giving figure.</p>'; return; }
+  var max = top[0].gt;
+  el.innerHTML = top.map(function (p, i) {
+    var tipH = '<b>' + esc(p.n) + '</b><br>' + esc(p.t || '') + (p.t ? '<br>' : '') + 'Documented: <span class="m">' + fmtFull$(p.gt) + '</span><br>' + esc(p._lists.join(', '));
+    return '<div class="grow" data-id="' + p.id + '" data-tip="' + esc(tipH) + '" role="button" tabindex="0"><span class="rk">' + (i + 1) + '</span><span class="nm"><span class="pbadge pb' + p.p + '" style="width:16px;height:16px;font-size:10px;margin-right:6px;vertical-align:-3px">' + p.p + '</span>' + esc(p.n) + '</span><span><span class="bar" style="display:block;width:' + Math.max(.4, 100 * p.gt / max) + '%"></span></span><span class="val">' + fmt$(p.gt) + '</span></div>';
+  }).join('');
+  el.querySelectorAll('.grow').forEach(function (g) {
+    g.onclick = function () { openRec(g.dataset.id); };
+    g.onkeydown = function (e) { if (e.key === 'Enter') openRec(g.dataset.id); };
+  });
+  bindTips(el);
+}
+
+/* ---------- table ---------- */
+var COLS = [
+  { k: 'n', h: 'Name' }, { k: 'p', h: 'Pri.' }, { k: 'nl', h: 'Lists' }, { k: 't', h: 'Title or organization' },
+  { k: 'gt', h: 'Documented giving', money: true }, { k: 'gb', h: 'Gift band floor', money: true }, { k: 'd', h: 'Defense or nat-sec link' }
+];
+var PAGE = 50;
+function sortRows(R) {
+  var k = S.sort.k, dir = S.sort.dir;
+  return R.slice().sort(function (a, b) {
+    var x = a[k], y = b[k];
+    if (k === 'p') { x = 'ABCD'.indexOf(a.p); y = 'ABCD'.indexOf(b.p); }
+    if (x == null || x === '') return 1; if (y == null || y === '') return -1;
+    if (typeof x === 'string') return dir * x.localeCompare(y);
+    if (x === y) return 'ABCD'.indexOf(a.p) - 'ABCD'.indexOf(b.p);
+    return dir * (x - y);
+  });
+}
+function renderTable(R) {
+  var tbl = document.getElementById('table');
+  tbl.querySelector('thead').innerHTML = '<tr>' + COLS.map(function (c) {
+    var on = S.sort.k === c.k;
+    return '<th data-k="' + c.k + '" class="' + (c.money ? 'money ' : '') + (on ? 'sorted' : '') + '" aria-sort="' + (on ? (S.sort.dir > 0 ? 'ascending' : 'descending') : 'none') + '">' + c.h + (on ? (S.sort.dir > 0 ? ' &uarr;' : ' &darr;') : '') + '</th>';
+  }).join('') + '</tr>';
+  tbl.querySelectorAll('th').forEach(function (th) {
+    th.onclick = function () {
+      var k = th.dataset.k;
+      if (S.sort.k === k) S.sort.dir *= -1; else S.sort = { k: k, dir: (k === 'n' || k === 't' || k === 'd' || k === 'p') ? 1 : -1 };
+      S.page = 0; render();
+    };
+  });
+  var sorted = sortRows(R), pages = Math.max(1, Math.ceil(sorted.length / PAGE));
+  if (S.page >= pages) S.page = pages - 1;
+  var slice = sorted.slice(S.page * PAGE, S.page * PAGE + PAGE);
+  tbl.querySelector('tbody').innerHTML = slice.length ? slice.map(function (p) {
+    var loc = [p.ci, p.st].filter(Boolean).join(', ');
+    return '<tr class="r" data-id="' + p.id + '" tabindex="0">' +
+      '<td class="nm-cell"><b>' + esc(p.n) + '</b>' + (loc ? '<span class="loc">' + esc(loc) + '</span>' : '') + '</td>' +
+      '<td><span class="pbadge pb' + p.p + '">' + p.p + '</span></td>' +
+      '<td>' + p._lists.map(function (l) { return '<span class="lpill">' + esc(l) + '</span>'; }).join('') + '</td>' +
+      '<td><span class="clip">' + esc(p.t || '') + '</span></td>' +
+      '<td class="money">' + (p.gt ? fmtFull$(p.gt) : '') + '</td>' +
+      '<td class="money">' + (p.gb ? fmtFull$(p.gb) : '') + '</td>' +
+      '<td><span class="clip">' + esc(p.d || '') + '</span></td></tr>';
+  }).join('') : '<tr><td colspan="7" class="empty-msg">No prospects match these filters.</td></tr>';
+  tbl.querySelectorAll('tr.r').forEach(function (tr) {
+    tr.onclick = function () { openRec(tr.dataset.id); };
+    tr.onkeydown = function (e) { if (e.key === 'Enter') openRec(tr.dataset.id); };
+  });
+  document.getElementById('tsub').textContent = n(R.length) + ' prospects, sorted by ' + COLS.filter(function (c) { return c.k === S.sort.k; })[0].h.toLowerCase() + '. Click a header to re-sort, a row to open the record.';
+  var pg = document.getElementById('pager');
+  pg.innerHTML = '<span class="num">' + (sorted.length ? (S.page * PAGE + 1) + '-' + Math.min(sorted.length, (S.page + 1) * PAGE) : 0) + ' of ' + n(sorted.length) + '</span>' +
+    '<button class="btn ghost" id="prev"' + (S.page ? '' : ' disabled') + '>Previous</button><button class="btn ghost" id="next"' + (S.page < pages - 1 ? '' : ' disabled') + '>Next</button>';
+  document.getElementById('prev').onclick = function () { S.page--; renderTable(rows()); };
+  document.getElementById('next').onclick = function () { S.page++; renderTable(rows()); };
+}
+
+/* ---------- record drawer ---------- */
+var drawer = document.getElementById('drawer'), scrim = document.getElementById('scrim'), lastFocus;
+function linkify(s) {
+  return esc(s).replace(/(https?:\/\/[^\s;|,]+)/g, function (u) { return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u.replace(/^https?:\/\/(www\.)?/, '').slice(0, 70) + (u.length > 80 ? '...' : '') + '</a>'; })
+    .replace(/\b(M\d{4})\b/g, function (id) { return byId[id] ? '<a href="#" data-jump="' + id + '">' + id + '</a>' : id; });
+}
+function splitBar(s) { return (s || '').split(/\s\|\s/).map(function (x) { return x.trim(); }).filter(Boolean); }
+function list(items) { return items.length ? '<ul class="dlist">' + items.map(function (x) { return '<li>' + linkify(x) + '</li>'; }).join('') + '</ul>' : ''; }
+function kv(pairs) {
+  var h = pairs.filter(function (x) { return x[1]; }).map(function (x) { return '<dt>' + x[0] + '</dt><dd>' + (x[2] ? x[1] : linkify(x[1])) + '</dd>'; }).join('');
+  return h ? '<dl class="kv">' + h + '</dl>' : '';
+}
+function openRec(id) {
+  var p = byId[id]; if (!p) return;
+  lastFocus = document.activeElement;
+  var loc = [p.ci, p.stRaw || p.st].filter(Boolean).join(', ');
+  var money = [['527 giving 2025-26', p.g1], ['527 giving 2021-24', p.g2], ['State PAC giving', p.gp], ['IRS 527 total, all years (NE list)', p.gn], ['Known political money, all sources (NE list)', p.gk], ['Largest published gift band, floor', p.gb]];
+  var h = '<div class="dhead"><button class="close" aria-label="Close">&times;</button><h3>' + esc(p.n) + '</h3><div class="meta">' + esc([p.id, p.ty, loc].filter(Boolean).join(' · ')) + '</div></div><div class="dbody">';
+  h += '<div class="dsec" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="pbadge pb' + p.p + '" style="width:26px;height:26px;font-size:14px">' + p.p + '</span><span>Priority ' + p.p + ' &middot; on ' + p.nl + ' of our lists</span>' + p._lists.map(function (l) { return '<span class="lpill">' + esc(l) + '</span>'; }).join('') + '</div>';
+  if (p.pm) h += '<div class="dsec"><div class="warn"><b>Possible match to check.</b> ' + linkify(p.pm) + '</div></div>';
+  h += '<div class="dsec"><h4>Profile</h4>' + kv([['Title or organization', p.t], ['Wealth or investor signal', p.w], ['Defense or nat-sec link', p.d], ['New England tie', p.ne], ['Linked foundation', p.lf], ['Contact or LinkedIn', p.co]]) + '</div>';
+  h += '<div class="dsec"><h4>Political money</h4><div class="money-grid">' + money.map(function (m) { return '<div><span class="k">' + m[0] + '</span><span class="v">' + fmtFull$(m[1]) + '</span></div>'; }).join('') + '</div>' +
+    (p.gt ? '<p style="font-size:12.5px;margin:6px 0 0">Best available documented total: <b class="num">' + fmtFull$(p.gt) + '</b></p>' : '') + '</div>';
+  if (p.af) h += '<div class="dsec"><h4>Affiliations</h4>' + list(splitBar(p.af).reduce(function (acc, x) { return acc.concat(x.split(/;\s(?=[A-Z][^:]{2,80}:)/)); }, [])) + '</div>';
+  if (p.no) h += '<div class="dsec"><h4>Notes</h4>' + list(splitBar(p.no)) + '</div>';
+  h += '<div class="dsec"><h4>Provenance</h4>' + kv([['Match basis', p.mb], ['Priority on source lists', p.ps], ['Where found', p.wf]]) + '</div>';
+  if (p.so) h += '<div class="dsec"><h4>Sources</h4>' + list(p.so.split(/\s\|\s|;\s(?=https?:)/).map(function (x) { return x.trim(); }).filter(Boolean)) + '</div>';
+  h += '</div>';
+  drawer.innerHTML = h;
+  drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false'); scrim.classList.add('open');
+  drawer.querySelector('.close').onclick = closeRec;
+  drawer.querySelectorAll('[data-jump]').forEach(function (a) { a.onclick = function (e) { e.preventDefault(); openRec(a.dataset.jump); }; });
+  drawer.querySelector('.close').focus();
+  hideTip();
+}
+function closeRec() {
+  drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true'); scrim.classList.remove('open');
+  if (lastFocus) lastFocus.focus();
+}
+scrim.onclick = closeRec;
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && drawer.classList.contains('open')) closeRec(); });
+
+/* ---------- CSV ---------- */
+document.getElementById('csv').onclick = function () {
+  var R = sortRows(rows());
+  var cols = [['Master ID', 'id'], ['Name', 'n'], ['Priority', 'p'], ['City or region', 'ci'], ['State', 'st'], ['Lists', function (p) { return p._lists.join('; '); }],
+    ['Title or organization', 't'], ['Documented political giving ($)', 'gt'], ['527 giving 2025-26 ($)', 'g1'], ['527 giving 2021-24 ($)', 'g2'], ['State PAC giving ($)', 'gp'],
+    ['Largest published gift band floor ($)', 'gb'], ['Defense or national security link', 'd'], ['Wealth or investor signal', 'w'], ['New England tie', 'ne'], ['Notes', 'no']];
+  var q = function (v) { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  var csv = cols.map(function (c) { return q(c[0]); }).join(',') + '\n' + R.map(function (p) {
+    return cols.map(function (c) { return q(typeof c[1] === 'function' ? c[1](p) : p[c[1]]); }).join(',');
+  }).join('\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'prospects-view-' + R.length + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+};
+
+/* ---------- render ---------- */
+function render() {
+  var R = rows();
+  renderActive(R.length);
+  renderKpis(R);
+  renderMap(rows('state'));
+  renderLists(rows('list'));
+  renderOverlap(rows('list'));
+  renderInst(rows('inst'));
+  renderGivers(R);
+  renderTable(R);
+}
+render();
+})();
+</script>
+</body>
+</html>
