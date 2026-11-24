@@ -32,8 +32,8 @@ Set `ASSETS_DIR` if it lives elsewhere.
 
 | Path | What it is |
 | --- | --- |
-| `index.html` | The built explorer. This is the deliverable. |
-| `docs/index.html` | The same file, served by GitHub Pages. |
+| `index.html` | The built explorer with both tabs. This is the deliverable. |
+| `docs/index.html` | The same file, for Pages set to serve `/docs`. |
 | `src/template.html` | Page, styles and chart code. Edit this, not `index.html`. |
 | `scripts/prep.py` | Cleans the sheet export into `data/prospects.js`. |
 | `scripts/build.py` | Inlines data and map code into `index.html`. |
@@ -43,16 +43,16 @@ The data is private donor research. Keep this repo private.
 
 ## GitHub Pages
 
-`docs/` holds the hosted copy: the explorer with its two tabs (All prospects and New England)
-as `index.html`, plus the two data files it loads, `prospects.json` and `ne-data.json`. The raw
-export in `data/` is not in `docs/`. In the repo's Settings, open Pages, set the source to
-"Deploy from a branch", and pick `claude/festive-keller-yno2xw` with the `/docs` folder. The
-site is then at `https://lgoundenrosc.github.io/donormap/`, and
+The site is at `https://lgoundenrosc.github.io/donormap/`, and
 `https://lgoundenrosc.github.io/donormap/#new-england` opens the New England tab.
 
-`docs/` is built from the claude.ai artifact version of the explorer (which loads
-`prospects.json` rather than inlining it) with the New England tab merged in by
-`new-england/build/build_explorer.py`, then wrapped as a full HTML document.
+`index.html` and `docs/index.html` are the same file: the explorer with both tabs (All prospects
+and New England), with all data inlined, so it works whichever folder Pages serves and when
+opened straight from disk. To rebuild it, run `new-england/build/build_explorer.py` on the live
+artifact HTML, wrap the result as a full page in `docs/index.html` (see that script's notes),
+then run `new-england/build/build_hosted.py . <prospects.json> <ne-data.json>`.
+`scripts/build.py` from the explorer branch builds the older single-tab page, so running it
+here would drop the New England tab.
 
 A Pages site is public to anyone with the URL, even when the repo is private, unless the
 organization is on GitHub Enterprise Cloud and the site's visibility is set to private. The page
