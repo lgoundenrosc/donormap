@@ -4,3 +4,4 @@ new-england/geo/
 node_modules/
 .env
 *.env
+dist/
