@@ -32,6 +32,14 @@ placed by one of three bases, and the page keeps them apart:
 4. `python3 -I build/geometry.py .` then `python3 -I build/assemble.py .` write `site/data.json`.
 5. `node build/shot.js site <out-dir>` renders test screenshots with Playwright.
 
+### Explorer tab
+
+The same view also runs as the New England tab of the Investor Prospect Explorer artifact.
+`build/build_explorer.py` takes the live Explorer HTML (read it from the artifact and save as
+`explorer/live.html`) plus `site/index.html`, mounts the New England view in a shadow root so the
+two pages' styles and ids can't collide, and writes `explorer/index.html`. Publish that with
+`site/data.json` as `ne-data.json`. `#new-england` on the Explorer link opens the tab directly.
+
 ### Things that break easily
 
 - Town and context-land paths are stored as integer tenths of a viewBox unit with relative
